@@ -1,6 +1,7 @@
 stages:
   - lint
   - test
+  - build
 include:
   - component: $CI_SERVER_FQDN/components/code-quality-oss/codequality-os-scanners-integration/shellcheck@1.6.1
   - component: $CI_SERVER_FQDN/components/code-quality-oss/codequality-os-scanners-integration/golangci@1.6.1
@@ -25,5 +26,11 @@ go-test:
   image: golangci/golangci-lint:v2.13.2
   stage: test
   script:
-    - go test ./...
+    - go test -race ./...
+  allow_failure: false
+build:
+  stage: build
+  image: golangci/golangci-lint:v2.13.2
+  script:
+    - /bin/bash ./_scripts/build.sh 0.0.0
   allow_failure: false
