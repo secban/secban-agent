@@ -1,0 +1,64 @@
+linters:
+  default: all
+  disable:
+    - depguard # We have few imports.
+    - err113 # Too much refactoring. To be revisited.
+    - exhaustruct # We do not want to enforce exhaustive struct checks.
+    - exhaustruct_v5
+    - goconst # A bit too eager.
+    - gomodguard # deprecated
+    - lll # Line length lint, not able to ignore functions declarations.
+    - nlreturn # Newline return lint, not to my taste.
+    - prealloc # Readability trade-off, not enforcing preallocation.
+    - tagliatelle # We do not want camel case for json.
+    - wrapcheck # To revisit later.
+    - wsl # Replaced by wsl_v5
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # Exclude some linters from running on tests files.
+      - linters:
+          - forbidigo
+          - gochecknoglobals
+          - gocognit
+          - goconst
+          - gocritic
+          - gocyclo
+          - gosec
+          - ireturn
+          - mnd
+          - maintidx
+        path: _test\.go$
+
+  settings:
+    revive:
+      rules:
+        - disabled: true
+          name: package-comments
+        - disabled: true
+          name: exported
+    varnamelen:
+      ignore-decls:
+        - ctx context.Context
+        - i int
+        - id string
+        - o offender.Offender
+        - ok bool
+        - op string
+        - r *http.Request
+        - r *mux.Router
+        - w http.ResponseWriter
+      ignore-names:
+        - ip # address
+        - tt # standard table-driven test variable name
+        - db # standard database variable name
+version: "2"
