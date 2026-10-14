@@ -15,7 +15,9 @@ ARCHS="amd64 arm64"
 
 TMPDIR=$(mktemp -d)
 
+# shellcheck disable=SC2086 # We want $BUILD_OPTIONS to be expanded as-is.
 for target in $ARCHS; do
+    
     export GOARCH="$target"; env GOOS=$GOOS GOARCH="$target" go build $BUILD_OPTIONS -o "$TMPDIR/$target/secban-agent" "$LDFLAGS" "$REPO/cmd/agent/agent.go"
     export GOARCH="$target"; env GOOS=$GOOS GOARCH="$target" go build $BUILD_OPTIONS -o "$TMPDIR/$target/secban-agent-configcheck" "$LDFLAGS" "$REPO/cmd/configcheck/configcheck.go"
     
@@ -28,4 +30,7 @@ for target in $ARCHS; do
     chmod +x "$TMPDIR/$target/install.sh"
 
     (cd "$TMPDIR/$target" && tar -czvf "$REPO/build/$GOOS-$target-$1.tar.gz" ./*)
+    
 done
+
+rm -rf "$TMPDIR"

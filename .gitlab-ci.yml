@@ -2,6 +2,8 @@ stages:
   - lint
   - test
   - build
+  - prepare_release
+  - release
 include:
   - component: $CI_SERVER_FQDN/components/code-quality-oss/codequality-os-scanners-integration/shellcheck@1.6.1
   - component: $CI_SERVER_FQDN/components/code-quality-oss/codequality-os-scanners-integration/golangci@1.6.1
@@ -9,6 +11,7 @@ include:
   - template: Security/Secret-Detection.gitlab-ci.yml
 variables:
   SECRET_DETECTION_ENABLED: "true"
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/browser-dispatch/${CI_COMMIT_TAG}"
 shellcheck-generate:
   stage: lint
   allow_failure: false
@@ -34,3 +37,40 @@ build:
   script:
     - /bin/bash ./_scripts/build.sh 0.0.0
   allow_failure: false
+prepare_release:
+  image: golangci/golangci-lint:v2.13.2
+  stage: prepare_release
+  script:
+    - /bin/bash ./_scripts/build.sh ${CI_COMMIT_TAG}
+    - |
+      for file in ./build/*; do
+        if [ -f "$file" ]; then
+          filename=$(basename "$file")
+          curl --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+              --upload-file "$file" \
+              "$PACKAGE_REGISTRY_URL/$filename"
+        fi
+      done
+  rules:
+    - if: $CI_COMMIT_TAG
+  artifacts:
+    paths:
+      - build
+    expire_in: 1 hour
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - echo "running release_job"
+  release:
+    name: "secban-agent-$CI_COMMIT_TAG"
+    tag_name: "$CI_COMMIT_TAG"
+    description: "SecBan Agent release $CI_COMMIT_TAG"
+    assets:
+      links:
+        - name: "linux-amd64-$CI_COMMIT_TAG.tar.gz"
+          url: "$PACKAGE_REGISTRY_URL/linux-amd64-$CI_COMMIT_TAG.tar.gz"
+        - name: "linux-arm64-$CI_COMMIT_TAG.tar.gz"
+          url: "$PACKAGE_REGISTRY_URL/linux-arm64-$CI_COMMIT_TAG.tar.gz"
