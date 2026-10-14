@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	debounceWindow    = 1 * time.Second
-	maxTrackerEntries = 1000
+	debounceWindow    = 2 * time.Second
+	maxTrackerEntries = 500
 )
 
 type debounceTracker struct {
