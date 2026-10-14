@@ -1,0 +1,9 @@
+# This file contains IP addresses and address blocks that are allowed.
+# Each line should contain a single IP address or CIDR block that is allowed.
+# 192.168.0.124
+# By default, the following are always allowed, even if not explicitly listed here.
+# - local ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, or fc00::/7
+# - loopback addresses: 127.0.0.0/8, ::1/128
+# You can disable the automatic allowance of local and loopback addresses by modifying the agent configuration.
+127.0.0.0/8
+::1/128

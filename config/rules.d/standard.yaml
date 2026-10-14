@@ -1,0 +1,6 @@
+# Rules for banning IP addresses.
+standard:
+  ban_duration: "2m"
+  count: 3
+  max_entries: 100
+  registry_ttl: "10m"

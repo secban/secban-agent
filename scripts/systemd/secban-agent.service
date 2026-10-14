@@ -1,0 +1,25 @@
+[Unit]
+Description=SecBan Agent Service
+After=network.target
+ConditionPathExists=/usr/sbin/secban-agent
+
+[Service]
+User=secban-agent
+Group=secban
+Type=exec
+ExecStart=/usr/sbin/secban-agent
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/run/secban /var/lib/secban
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+
+[Install]
+WantedBy=multi-user.target
+Alias=secban-agent.service

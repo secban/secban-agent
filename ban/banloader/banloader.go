@@ -1,0 +1,20 @@
+package banloader
+
+import (
+	"fmt"
+
+	"gitlab.com/thequietbot/secban/secban-agent/ban"
+	"gitlab.com/thequietbot/secban/secban-agent/ban/dummy"
+	"gitlab.com/thequietbot/secban/secban-agent/ban/nft"
+)
+
+func Load(name string) (ban.Actor, error) { //nolint: ireturn // It's just a convenience wrapper.
+	switch name {
+	case "dummy":
+		return dummy.New(), nil
+	case "nft":
+		return nft.New(), nil
+	}
+
+	return nil, fmt.Errorf("unknown ban method: %s", name)
+}
