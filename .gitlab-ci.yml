@@ -9,10 +9,13 @@ variables:
   SECRET_DETECTION_ENABLED: "true"
 shellcheck-generate:
   stage: lint
+  allow_failure: false
 shellcheck-format:
   stage: lint
+  allow_failure: false
 golangci-lint:
   stage: lint
+  allow_failure: false
 sast:
   stage: lint
 secret_detection:
