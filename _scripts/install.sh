@@ -48,6 +48,11 @@ if [ ! -f /etc/secban/agent.yaml ]; then
 fi
 
 # Install the systemd service file for the secban-agent.
-cp "./secban-agent.service" "/etc/systemd/system/secban-agent.service"
-systemctl daemon-reload
-systemctl enable secban-agent.service
+if [ ! -f /etc/systemd/system/secban-agent.service ]; then
+    cp "./secban-agent.service" "/etc/systemd/system/secban-agent.service"
+fi
+
+if [ ! -z "$(which systemctl)" ]; then
+    systemctl daemon-reload
+    systemctl enable secban-agent.service
+fi
