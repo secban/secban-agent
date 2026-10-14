@@ -1,5 +1,6 @@
 stages:
   - lint
+  - test
 include:
   - component: $CI_SERVER_FQDN/components/code-quality-oss/codequality-os-scanners-integration/shellcheck@1.6.1
   - component: $CI_SERVER_FQDN/components/code-quality-oss/codequality-os-scanners-integration/golangci@1.6.1
@@ -20,3 +21,8 @@ sast:
   stage: lint
 secret_detection:
   stage: lint
+go-test:
+  stage: test
+  script:
+    - go test ./...
+  allow_failure: false
