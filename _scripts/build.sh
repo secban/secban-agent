@@ -29,7 +29,7 @@ for target in $ARCHS; do
 
     chmod +x "$TMPDIR/$target/install.sh"
 
-    (cd "$TMPDIR/$target" && tar -czvf "$REPO/build/$GOOS-$target-$1.tar.gz" ./*)
+    (cd "$TMPDIR/$target" && tar -czvf "$REPO/build/secban-agent-$GOOS-$target-$1.tar.gz" ./*)
     
 done
 

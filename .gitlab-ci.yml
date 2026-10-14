@@ -11,7 +11,7 @@ include:
   - template: Security/Secret-Detection.gitlab-ci.yml
 variables:
   SECRET_DETECTION_ENABLED: "true"
-  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/browser-dispatch/${CI_COMMIT_TAG}"
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/secban-agent/${CI_COMMIT_TAG}"
 shellcheck-generate:
   stage: lint
   allow_failure: false
@@ -70,7 +70,7 @@ release:
     description: "SecBan Agent release $CI_COMMIT_TAG"
     assets:
       links:
-        - name: "linux-amd64-$CI_COMMIT_TAG.tar.gz"
-          url: "$PACKAGE_REGISTRY_URL/linux-amd64-$CI_COMMIT_TAG.tar.gz"
-        - name: "linux-arm64-$CI_COMMIT_TAG.tar.gz"
-          url: "$PACKAGE_REGISTRY_URL/linux-arm64-$CI_COMMIT_TAG.tar.gz"
+        - name: "secban-agent-linux-amd64-$CI_COMMIT_TAG.tar.gz"
+          url: "$PACKAGE_REGISTRY_URL/secban-agent-linux-amd64-$CI_COMMIT_TAG.tar.gz"
+        - name: "secban-agent-linux-arm64-$CI_COMMIT_TAG.tar.gz"
+          url: "$PACKAGE_REGISTRY_URL/secban-agent-linux-arm64-$CI_COMMIT_TAG.tar.gz"
