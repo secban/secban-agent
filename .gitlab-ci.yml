@@ -7,8 +7,11 @@ include:
   - template: Security/Secret-Detection.gitlab-ci.yml
 variables:
   SECRET_DETECTION_ENABLED: "true"
-
-shellcheck:
+shellcheck-generate:
+  stage: lint
+shellcheck-format:
+  stage: lint
+golangci-lint:
   stage: lint
 sast:
   stage: lint
