@@ -22,6 +22,7 @@ sast:
 secret_detection:
   stage: lint
 go-test:
+  image: golangci/golangci-lint:v2.13.2
   stage: test
   script:
     - go test ./...
