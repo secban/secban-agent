@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.com/thequietbot/secban/secban-agent/entry"
-	"gitlab.com/thequietbot/secban/secban-agent/offender"
+	"gitlab.com/secban/secban-agent/entry"
+	"gitlab.com/secban/secban-agent/offender"
 )
 
 const (

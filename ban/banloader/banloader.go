@@ -3,9 +3,9 @@ package banloader
 import (
 	"fmt"
 
-	"gitlab.com/thequietbot/secban/secban-agent/ban"
-	"gitlab.com/thequietbot/secban/secban-agent/ban/dummy"
-	"gitlab.com/thequietbot/secban/secban-agent/ban/nft"
+	"gitlab.com/secban/secban-agent/ban"
+	"gitlab.com/secban/secban-agent/ban/dummy"
+	"gitlab.com/secban/secban-agent/ban/nft"
 )
 
 func Load(name string) (ban.Actor, error) { //nolint: ireturn // It's just a convenience wrapper.

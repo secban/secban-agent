@@ -3,7 +3,7 @@ package timeout_test
 import (
 	"testing"
 
-	"gitlab.com/thequietbot/secban/secban-agent/timeout"
+	"gitlab.com/secban/secban-agent/timeout"
 )
 
 func TestIsValid(t *testing.T) {

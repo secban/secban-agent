@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"gitlab.com/thequietbot/secban/secban-agent/entry"
+	"gitlab.com/secban/secban-agent/entry"
 )
 
 type Offender struct {

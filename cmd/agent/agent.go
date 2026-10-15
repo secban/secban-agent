@@ -14,12 +14,12 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"gitlab.com/thequietbot/secban/secban-agent/ban/banloader"
-	"gitlab.com/thequietbot/secban/secban-agent/config"
-	"gitlab.com/thequietbot/secban/secban-agent/db"
-	"gitlab.com/thequietbot/secban/secban-agent/dispatcher"
-	"gitlab.com/thequietbot/secban/secban-agent/ip"
-	"gitlab.com/thequietbot/secban/secban-agent/router"
+	"gitlab.com/secban/secban-agent/ban/banloader"
+	"gitlab.com/secban/secban-agent/config"
+	"gitlab.com/secban/secban-agent/db"
+	"gitlab.com/secban/secban-agent/dispatcher"
+	"gitlab.com/secban/secban-agent/ip"
+	"gitlab.com/secban/secban-agent/router"
 )
 
 const (

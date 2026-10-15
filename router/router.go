@@ -3,10 +3,10 @@ package router
 import (
 	"net/http"
 
-	"gitlab.com/thequietbot/secban/secban-agent/handler/ban"
-	"gitlab.com/thequietbot/secban/secban-agent/handler/ping"
-	"gitlab.com/thequietbot/secban/secban-agent/handler/report"
-	"gitlab.com/thequietbot/secban/secban-agent/handler/status"
+	"gitlab.com/secban/secban-agent/handler/ban"
+	"gitlab.com/secban/secban-agent/handler/ping"
+	"gitlab.com/secban/secban-agent/handler/report"
+	"gitlab.com/secban/secban-agent/handler/status"
 )
 
 func NewRouter() *http.ServeMux {

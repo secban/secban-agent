@@ -14,11 +14,11 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"gitlab.com/thequietbot/secban/secban-agent/ban"
-	"gitlab.com/thequietbot/secban/secban-agent/db"
-	"gitlab.com/thequietbot/secban/secban-agent/dispatcher"
-	"gitlab.com/thequietbot/secban/secban-agent/ip"
-	"gitlab.com/thequietbot/secban/secban-agent/timeout"
+	"gitlab.com/secban/secban-agent/ban"
+	"gitlab.com/secban/secban-agent/db"
+	"gitlab.com/secban/secban-agent/dispatcher"
+	"gitlab.com/secban/secban-agent/ip"
+	"gitlab.com/secban/secban-agent/timeout"
 	"gopkg.in/yaml.v2"
 )
 

@@ -1,4 +1,4 @@
-module gitlab.com/thequietbot/secban/secban-agent
+module gitlab.com/secban/secban-agent
 
 go 1.27.0
 

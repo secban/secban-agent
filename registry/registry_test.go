@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/thequietbot/secban/secban-agent/registry"
+	"gitlab.com/secban/secban-agent/registry"
 )
 
 func TestRegistryCapacityEviction(t *testing.T) {

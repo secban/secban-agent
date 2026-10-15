@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"gitlab.com/thequietbot/secban/secban-agent/offender"
+	"gitlab.com/secban/secban-agent/offender"
 )
 
 const timeout = 1 * time.Second

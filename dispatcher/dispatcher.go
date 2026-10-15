@@ -8,13 +8,13 @@ import (
 	"unicode"
 
 	"github.com/rs/zerolog/log"
-	"gitlab.com/thequietbot/secban/secban-agent/action"
-	"gitlab.com/thequietbot/secban/secban-agent/ban"
-	"gitlab.com/thequietbot/secban/secban-agent/banlog"
-	"gitlab.com/thequietbot/secban/secban-agent/ip"
-	"gitlab.com/thequietbot/secban/secban-agent/ipc"
-	"gitlab.com/thequietbot/secban/secban-agent/offender"
-	"gitlab.com/thequietbot/secban/secban-agent/registry"
+	"gitlab.com/secban/secban-agent/action"
+	"gitlab.com/secban/secban-agent/ban"
+	"gitlab.com/secban/secban-agent/banlog"
+	"gitlab.com/secban/secban-agent/ip"
+	"gitlab.com/secban/secban-agent/ipc"
+	"gitlab.com/secban/secban-agent/offender"
+	"gitlab.com/secban/secban-agent/registry"
 )
 
 var dispatcher *Dispatcher //nolint: gochecknoglobals

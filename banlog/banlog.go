@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"gitlab.com/thequietbot/secban/secban-agent/db"
-	"gitlab.com/thequietbot/secban/secban-agent/offender"
+	"gitlab.com/secban/secban-agent/db"
+	"gitlab.com/secban/secban-agent/offender"
 )
 
 type Entry struct {

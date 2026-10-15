@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	dispatcher "gitlab.com/thequietbot/secban/secban-agent/dispatcher"
-	"gitlab.com/thequietbot/secban/secban-agent/ip"
+	dispatcher "gitlab.com/secban/secban-agent/dispatcher"
+	"gitlab.com/secban/secban-agent/ip"
 )
 
 type fakeBanActor struct {

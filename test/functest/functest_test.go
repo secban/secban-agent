@@ -11,11 +11,11 @@ import (
 	"sync"
 	"testing"
 
-	"gitlab.com/thequietbot/secban/secban-agent/ban/dummy"
-	"gitlab.com/thequietbot/secban/secban-agent/dispatcher"
-	"gitlab.com/thequietbot/secban/secban-agent/ip"
-	"gitlab.com/thequietbot/secban/secban-agent/offender"
-	"gitlab.com/thequietbot/secban/secban-agent/router"
+	"gitlab.com/secban/secban-agent/ban/dummy"
+	"gitlab.com/secban/secban-agent/dispatcher"
+	"gitlab.com/secban/secban-agent/ip"
+	"gitlab.com/secban/secban-agent/offender"
+	"gitlab.com/secban/secban-agent/router"
 )
 
 var testServer *httptest.Server

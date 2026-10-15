@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/thequietbot/secban/secban-agent/entry"
-	ipc "gitlab.com/thequietbot/secban/secban-agent/ipc"
-	"gitlab.com/thequietbot/secban/secban-agent/offender"
+	"gitlab.com/secban/secban-agent/entry"
+	ipc "gitlab.com/secban/secban-agent/ipc"
+	"gitlab.com/secban/secban-agent/offender"
 )
 
 func TestParseMessageRoundTrip(t *testing.T) {

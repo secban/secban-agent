@@ -7,9 +7,9 @@ import (
 	"os/exec"
 	"sync"
 
-	"gitlab.com/thequietbot/secban/secban-agent/ban"
-	"gitlab.com/thequietbot/secban/secban-agent/ip"
-	"gitlab.com/thequietbot/secban/secban-agent/timeout"
+	"gitlab.com/secban/secban-agent/ban"
+	"gitlab.com/secban/secban-agent/ip"
+	"gitlab.com/secban/secban-agent/timeout"
 )
 
 const (

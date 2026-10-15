@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/thequietbot/secban/secban-agent/action"
-	"gitlab.com/thequietbot/secban/secban-agent/offender"
+	"gitlab.com/secban/secban-agent/action"
+	"gitlab.com/secban/secban-agent/offender"
 )
 
 func TestExecuteCustomActionRunsAllConfiguredActions(t *testing.T) {

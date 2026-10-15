@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"gitlab.com/thequietbot/secban/secban-agent/ip"
+	"gitlab.com/secban/secban-agent/ip"
 )
 
 func TestAddrType(t *testing.T) {

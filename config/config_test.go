@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"gitlab.com/thequietbot/secban/secban-agent/config"
+	"gitlab.com/secban/secban-agent/config"
 )
 
 func TestLoadConfigAcceptsActionsSlice(t *testing.T) {
