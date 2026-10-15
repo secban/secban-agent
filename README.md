@@ -1,6 +1,6 @@
 # SecBan Agent
 
-SecBan Agent is the central enforcement daemon of the SecBan framework. It maintains an in-memory registry of reported suspicious activities, checks IP allowlists, enforces firewall bans via `nftables`, logs incidents to SQLite, runs custom notification scripts, and broadcasts ban events across UNIX domain sockets.
+SecBan Agent is the central enforcement daemon of the [SecBan framework](https://gitlab.com/secban). It maintains an in-memory registry of reported suspicious activities, checks IP allowlists, enforces firewall bans via `nftables`, logs incidents to SQLite, runs custom notification scripts, and broadcasts ban events across UNIX domain sockets.
 
 It exposes an HTTP API over a UNIX domain socket and/or TCP.
 
