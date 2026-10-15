@@ -44,6 +44,42 @@ bad:
 	assertRuleActions(t, cfg, []string{"/tmp/first.sh", "/tmp/second.sh"})
 }
 
+func TestLoadConfigAcceptsStrictPermissions(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	databasePath := filepath.Join(dir, "agent.sqlite")
+	listenUnix := filepath.Join(dir, "agent.sock")
+
+	agentConfig := "database: " + databasePath + "\nlisten_unix: " + listenUnix + "\nban_method: dummy\nrules_default:\n  count: 1\n  ban_duration: 5m\n  registry_ttl: 10m\n  max_entries: 10\n"
+
+	writeErr := os.WriteFile(filepath.Join(dir, "agent.yaml"), []byte(agentConfig), 0o600)
+	if writeErr != nil {
+		t.Fatalf("write agent config: %v", writeErr)
+	}
+
+	writeErr = os.MkdirAll(filepath.Join(dir, "rules.d"), 0o755)
+	if writeErr != nil {
+		t.Fatalf("create rules dir: %v", writeErr)
+	}
+
+	ruleConfig := "ssh:\n  count: 2\n  ban_duration: 10m\n  registry_ttl: 10m\n  max_entries: 10\n"
+
+	writeErr = os.WriteFile(filepath.Join(dir, "rules.d", "ssh.yaml"), []byte(ruleConfig), 0o600)
+	if writeErr != nil {
+		t.Fatalf("write rule config: %v", writeErr)
+	}
+
+	cfg, loadErr := config.LoadConfig(dir)
+	if loadErr != nil {
+		t.Fatalf("load config with 0600 perms: %v", loadErr)
+	}
+
+	if len(cfg.Rules) != 1 {
+		t.Fatalf("expected 1 rule, got %d", len(cfg.Rules))
+	}
+}
+
 func createConfigDir(t *testing.T, agentYAML string) string {
 	t.Helper()
 
@@ -53,7 +89,7 @@ func createConfigDir(t *testing.T, agentYAML string) string {
 
 	agentConfig := "database: " + databasePath + "\nlisten_unix: " + listenUnix + "\n" + agentYAML
 
-	writeErr := os.WriteFile(filepath.Join(dir, "agent.yaml"), []byte(agentConfig), 0o600)
+	writeErr := os.WriteFile(filepath.Join(dir, "agent.yaml"), []byte(agentConfig), 0o644)
 	if writeErr != nil {
 		t.Fatalf("write agent config: %v", writeErr)
 	}
@@ -69,7 +105,7 @@ func createConfigDir(t *testing.T, agentYAML string) string {
 func writeRuleFile(t *testing.T, dir string, name string, ruleYAML string) {
 	t.Helper()
 
-	writeErr := os.WriteFile(filepath.Join(dir, "rules.d", name), []byte(ruleYAML), 0o600)
+	writeErr := os.WriteFile(filepath.Join(dir, "rules.d", name), []byte(ruleYAML), 0o644)
 	if writeErr != nil {
 		t.Fatalf("write rule config: %v", writeErr)
 	}

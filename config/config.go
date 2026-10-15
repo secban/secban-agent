@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"maps"
 	"os"
 	"path"
@@ -12,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"gitlab.com/thequietbot/secban/secban-agent/ban"
 	"gitlab.com/thequietbot/secban/secban-agent/db"
 	"gitlab.com/thequietbot/secban/secban-agent/dispatcher"
@@ -21,9 +23,9 @@ import (
 )
 
 const (
-	fileName         = "agent.yaml"
-	defaultAllowList = "/etc/secban/allowlist"
-	rulesDir         = "rules.d"
+	fileName     = "agent.yaml"
+	rulesDir     = "rules.d"
+	maxFilePerms = fs.FileMode(0o644)
 )
 
 type Rule struct {
@@ -127,6 +129,8 @@ func LoadConfig(configDir string) (*Config, error) {
 func parseConfig(configDir string) (*ParsedConfig, error) {
 	mainConfigPath := path.Join(configDir, fileName)
 
+	checkYAMLPermissions(mainConfigPath)
+
 	var parsed ParsedConfig
 
 	configData, readErr := os.ReadFile(mainConfigPath)
@@ -140,6 +144,25 @@ func parseConfig(configDir string) (*ParsedConfig, error) {
 	}
 
 	return &parsed, nil
+}
+
+func checkYAMLPermissions(filePath string) {
+	fileInfo, statErr := os.Stat(filePath)
+	if statErr != nil {
+		log.Fatal().
+			Str("file", filePath).
+			Err(statErr).
+			Msg("failed to stat yaml configuration file")
+	}
+
+	mode := fileInfo.Mode().Perm()
+	if mode > maxFilePerms || mode&^maxFilePerms != 0 {
+		log.Fatal().
+			Str("file", filePath).
+			Str("permissions", fmt.Sprintf("%#o", mode)).
+			Str("max_expected", fmt.Sprintf("%#o", maxFilePerms)).
+			Msg("invalid permissions for yaml configuration file: expected 0644 or lower")
+	}
 }
 
 func parseLogLevel(logLevel string) (zerolog.Level, error) {
@@ -350,6 +373,8 @@ func readYAMLDir[T any](dirPath string) (map[string]T, error) {
 		}
 
 		filePath := filepath.Join(dirPath, name)
+
+		checkYAMLPermissions(filePath)
 
 		data, readFileErr := os.ReadFile(filePath)
 		if readFileErr != nil {
