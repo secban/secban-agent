@@ -61,37 +61,46 @@ prepare_release:
     - .go-cache
   stage: prepare_release
   script:
-    - /bin/bash ./_scripts/build.sh "linux" "amd64" "${CI_COMMIT_TAG}"
+    # Build using the matrix variables
+    - /bin/bash ./_scripts/build.sh "$OS" "$ARCH" "${CI_COMMIT_TAG}"
+
+    # Upload assets to the generic registry and build the dynamic link entry
+    - mkdir -p release_assets
     - |
       for file in ./build/*; do
         if [ -f "$file" ]; then
           filename=$(basename "$file")
+
           curl --header "JOB-TOKEN: $CI_JOB_TOKEN" \
               --upload-file "$file" \
               "$PACKAGE_REGISTRY_URL/$filename"
+              
+          echo "{\"name\":\"${filename}\",\"url\":\"${PACKAGE_REGISTRY_URL}/${filename}\"}" > "release_assets/${OS}_${ARCH}.json"
         fi
       done
   rules:
     - if: $CI_COMMIT_TAG
   artifacts:
     paths:
-      - build
+      - release_assets/
     expire_in: 1 hour
   <<: *build_matrix
+
 release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - job: prepare_release
   rules:
     - if: $CI_COMMIT_TAG
   script:
-    - echo "running release_job"
-  release:
-    name: "secban-agent-$CI_COMMIT_TAG"
-    tag_name: "$CI_COMMIT_TAG"
-    description: "SecBan Agent release $CI_COMMIT_TAG"
-    assets:
-      links:
-        - name: "secban-agent-linux-amd64-$CI_COMMIT_TAG.tar.gz"
-          url: "$PACKAGE_REGISTRY_URL/secban-agent-linux-amd64-$CI_COMMIT_TAG.tar.gz"
-        - name: "secban-agent-linux-arm64-$CI_COMMIT_TAG.tar.gz"
-          url: "$PACKAGE_REGISTRY_URL/secban-agent-linux-arm64-$CI_COMMIT_TAG.tar.gz"
+    - echo "[" > raw_assets.json
+    - cat release_assets/*.json | sed '$!s/$/,/' >> raw_assets.json
+    - echo "]" >> raw_assets.json
+    - ASSETS_JSON=$(cat raw_assets.json | tr -d '\n\r ' | sed 's/"/\\"/g')
+    - |
+      release-cli create \
+        --name "secban-agent-$CI_COMMIT_TAG" \
+        --tag-name "$CI_COMMIT_TAG" \
+        --description "SecBan Agent release $CI_COMMIT_TAG" \
+        --assets-link="$ASSETS_JSON"
