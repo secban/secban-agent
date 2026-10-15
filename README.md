@@ -17,7 +17,7 @@ It exposes an HTTP API over a UNIX domain socket and/or TCP.
 
 ## Installation
 
-Pre-compiled release packages are published in the GitLab package registry.
+Pre-compiled release packages are published in the GitLab package registry: https://gitlab.com/secban/secban-agent/-/releases/permalink/latest
 
 ### Download and Extract
 
