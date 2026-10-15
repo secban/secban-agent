@@ -62,7 +62,7 @@ sudo systemctl status secban-agent.service
 
 ## Configuration
 
-Configuration resides in `/etc/secban/`.
+Configuration resides in `/etc/secban/`. You can check that your changes are correct using the `secban-agent-configcheck` tool, which will try to load and validate the configuration files.
 
 ```
 /etc/secban/
