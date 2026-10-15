@@ -48,7 +48,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Str("message", message).
 		Msg("handling manual ban request")
 
-	actErr := dispatcher.Ban(r.Context(), ip, rule, message)
+	allowed, actErr := dispatcher.Ban(r.Context(), ip, rule, message)
 	if actErr != nil {
 		log.Warn().
 			Str("handler", "ban").
@@ -64,6 +64,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	response := map[string]string{"message": "banned", "ip": ip, "rule": rule}
+	if allowed {
+		response = map[string]string{"message": "ignored", "ip": ip, "rule": "ip allowed"}
+	}
 
 	encodeErr := json.NewEncoder(w).Encode(response)
 	if encodeErr != nil {

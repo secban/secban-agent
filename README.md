@@ -14,6 +14,8 @@ This means you can ban IP addresses directly using some custom logic at the fron
 
 ## API Endpoints
 
+* Note: While GET and POST methods are specified here for semantic purposes, all endpoints actually accept any HTTP methods.
+
 ### `GET /ping`
 
 Health check endpoint to verify agent availability.
@@ -76,7 +78,7 @@ curl --unix-socket /var/run/secban/agent.sock http://localhost/status/192.0.2.10
 
 ---
 
-### `POST /report/{ip}/{rule}` (or `GET`)
+### `POST /report/{ip}/{rule}`
 
 Reports suspicious activity for an IP address under a specified rule. Increments the rule event count. When the count threshold is met or exceeded, triggers ban action.
 
@@ -84,9 +86,9 @@ Reports suspicious activity for an IP address under a specified rule. Increments
 
 | Name | Type | In | Required | Description |
 |---|---|---|---|---|
-| `ip` | string | Path | Yes | Offending IP address (must be valid IP, not allowlisted). |
-| `rule` | string | Path | Yes | Name of configured rule (e.g. `ssh`, `nginx`). |
-| `message` | string | Query | No | Details about incident (max 2048 characters; control characters sanitized). |
+| `ip` | string | Path | Yes | Offending IP address (must be valid IP). |
+| `rule` | string | Path | Yes | Name of configured ban rule (e.g. `long`, `ban`, `short`, `ssh`). |
+| `message` | string | Query | No | Details about incident (max 2048 characters). |
 
 #### Request
 
@@ -109,11 +111,11 @@ curl -X POST --unix-socket /var/run/secban/agent.sock "http://localhost/report/1
 #### Errors
 
 - **Status Code:** `400 Bad Request`
-  - Returned when path format is invalid, message exceeds 2048 characters, IP address is invalid or allowlisted, or rule is not found.
+  - Returned when path format is invalid, message exceeds 2048 characters, IP address is invalid, or rule is not found.
 
 ---
 
-### `POST /ban/{ip}/{rule}` (or `GET`)
+### `POST /ban/{ip}/{rule}`
 
 Immediately bans an IP address using specified rule configuration, bypassing event threshold count.
 

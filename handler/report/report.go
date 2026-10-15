@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/rs/zerolog/log"
 	"gitlab.com/thequietbot/secban/secban-agent/dispatcher"
@@ -42,8 +41,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message = sanitizeMessage(message)
-
 	log.Debug().
 		Str("handler", "report").
 		Str("ip", ip).
@@ -51,7 +48,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Str("message", message).
 		Msg("handling report request")
 
-	reportErr := dispatcher.Report(r.Context(), ip, rule, message)
+	allowed, reportErr := dispatcher.Report(r.Context(), ip, rule, message)
 	if reportErr != nil {
 		log.Warn().
 			Str("handler", "report").
@@ -67,6 +64,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	response := map[string]string{"message": "reported", "ip": ip, "rule": rule}
+	if allowed {
+		response = map[string]string{"message": "ignored", "ip": ip, "rule": "ip allowed"}
+	}
 
 	encodeErr := json.NewEncoder(w).Encode(response)
 	if encodeErr != nil {
@@ -76,18 +76,4 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			Msg("failed to encode report response")
 		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
 	}
-}
-
-func sanitizeMessage(msg string) string {
-	return strings.Map(func(char rune) rune {
-		if char == '\n' || char == '\r' {
-			return ' '
-		}
-
-		if char < 32 && char != '\t' {
-			return -1
-		}
-
-		return char
-	}, msg)
 }
