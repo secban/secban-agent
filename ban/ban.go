@@ -12,5 +12,5 @@ type Actor interface {
 }
 
 func Methods() []string {
-	return []string{"nft", "dummy"}
+	return []string{"dummy", "ipset", "nft"}
 }

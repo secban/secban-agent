@@ -344,7 +344,7 @@ SecBan Agent implements no built-in authentication, TLS encryption, or authoriza
 SecBan Agent runs as an unprivileged system user rather than `root`:
 
 - **Dedicated User & Group:** Service runs under user `secban-agent` and group `secban`.
-- **Linux Capabilities:** Only `CAP_NET_ADMIN` is granted (via systemd `AmbientCapabilities=CAP_NET_ADMIN` and `CapabilityBoundingSet=CAP_NET_ADMIN`) to manage `nftables` rulesets and sets without full root access.
+- **Linux Capabilities:** `CAP_NET_ADMIN` and `CAP_NET_RAW` are granted (via systemd `AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW` and `CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW`) to manage firewall rulesets (`nftables`, `ipset`, and `iptables`) without full root access.
 - **Filesystem Isolation:**
   - Filesystem access is locked down (`ProtectSystem=strict`, `ProtectHome=yes`, `PrivateTmp=yes`).
   - Write access is strictly limited to `/var/run/secban` (runtime socket) and `/var/lib/secban` (SQLite audit database).

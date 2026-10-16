@@ -16,9 +16,9 @@ const (
 type Registry struct {
 	offenders   map[string]offender.Offender
 	lock        *sync.Mutex
+	stopJanitor chan struct{}
 	ttl         time.Duration
 	maxEntries  int
-	stopJanitor chan struct{}
 }
 
 func New(ttl time.Duration, maxEntries int) *Registry {
@@ -39,7 +39,7 @@ func New(ttl time.Duration, maxEntries int) *Registry {
 
 func (r *Registry) Add(
 	ip string,
-	rule string,
+	_ string,
 	message string,
 ) offender.Offender {
 	r.lock.Lock()
@@ -55,7 +55,6 @@ func (r *Registry) Add(
 			IP:        ip,
 			Timestamp: time.Now(),
 			Entries:   []entry.Entry{},
-			Count:     0,
 		}
 	}
 
@@ -82,9 +81,9 @@ func (r *Registry) Get(ip string) (offender.Offender, bool) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	offender, exists := r.offenders[ip]
+	o, exists := r.offenders[ip]
 
-	return offender, exists
+	return o, exists
 }
 
 func (r *Registry) PruneExpired() int {

@@ -16,8 +16,8 @@ const timeout = 1 * time.Second
 type IPCArgs struct {
 	IP       string
 	Rule     string
-	Offender offender.Offender
 	Sockets  []string
+	Offender offender.Offender
 }
 
 type IPCMessage struct {

@@ -11,8 +11,8 @@ const (
 )
 
 type debounceTracker struct {
-	lock sync.Mutex
 	last map[string]time.Time
+	lock sync.Mutex
 }
 
 func newDebounceTracker() *debounceTracker {

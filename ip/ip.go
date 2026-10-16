@@ -12,15 +12,20 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	IP4 = "ip"
+	IP6 = "ip6"
+)
+
 type IP struct {
-	lock             sync.RWMutex
-	allowedPrefixes  []netip.Prefix
 	allowedSingleIPs map[netip.Addr]bool
+	allowedPrefixes  []netip.Prefix
+	lock             sync.RWMutex
 	allowLocal       bool
 	allowLoopback    bool
 }
 
-var ipManager *IP //nolint: gochecknoglobals
+var ipManager *IP //nolint:gochecknoglobals
 
 func New(allowlistPath string, allowLocal bool, allowLoopback bool) (*IP, error) {
 	var prefixes []netip.Prefix
@@ -127,11 +132,11 @@ func AddrType(raw string) (string, error) {
 	}
 
 	if addr.Is4() {
-		return "ip", nil
+		return IP4, nil
 	}
 
 	if addr.Is6() {
-		return "ip6", nil
+		return IP6, nil
 	}
 
 	return "", errors.New("unknown address type")

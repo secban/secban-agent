@@ -27,12 +27,12 @@ type NftCommand struct {
 }
 
 type NftManager struct {
-	lock         sync.Mutex
 	table        string
 	chain        string
 	set          string
 	nftCmd       string
 	addressTypes []string
+	lock         sync.Mutex
 }
 
 var _ ban.Actor = (*NftManager)(nil)

@@ -29,45 +29,45 @@ const (
 )
 
 type Rule struct {
-	Count       int      `yaml:"count"`
 	BanDuration string   `yaml:"ban_duration"`
 	RegistryTTL string   `yaml:"registry_ttl"`
-	MaxEntries  int      `yaml:"max_entries"`
 	Actions     []string `yaml:"actions"`
 	Sockets     []string `yaml:"sockets"`
+	Count       int      `yaml:"count"`
+	MaxEntries  int      `yaml:"max_entries"`
 }
 
 type RulesDefault struct {
-	Count       int      `yaml:"count"`
 	BanDuration string   `yaml:"ban_duration"`
 	RegistryTTL string   `yaml:"registry_ttl"`
-	MaxEntries  int      `yaml:"max_entries"`
 	Actions     []string `yaml:"actions"`
 	Sockets     []string `yaml:"sockets"`
+	Count       int      `yaml:"count"`
+	MaxEntries  int      `yaml:"max_entries"`
 }
 
 type ParsedConfig struct {
 	LogLevel      string       `yaml:"log_level"`
 	AllowList     string       `yaml:"allow_list"`
-	AllowLocal    bool         `yaml:"allow_local"`
-	AllowLoopback bool         `yaml:"allow_loopback"`
-	RulesDefault  RulesDefault `yaml:"rules_default"`
 	ListenTCP     string       `yaml:"listen_tcp"`
 	ListenUnix    string       `yaml:"listen_unix"`
 	BanMethod     string       `yaml:"ban_method"`
 	Database      string       `yaml:"database"`
+	RulesDefault  RulesDefault `yaml:"rules_default"`
+	AllowLocal    bool         `yaml:"allow_local"`
+	AllowLoopback bool         `yaml:"allow_loopback"`
 }
 
 type Config struct {
-	Rules         []dispatcher.RuleConfig
-	LogLevel      zerolog.Level
 	AllowList     string
-	AllowLocal    bool
-	AllowLoopback bool
 	ListenTCP     string
 	ListenUnix    string
 	BanMethod     string
 	Database      string
+	Rules         []dispatcher.RuleConfig
+	LogLevel      zerolog.Level
+	AllowLocal    bool
+	AllowLoopback bool
 }
 
 func LoadConfig(configDir string) (*Config, error) {

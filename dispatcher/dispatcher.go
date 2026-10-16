@@ -22,26 +22,26 @@ var dispatcher *Dispatcher //nolint: gochecknoglobals
 type Entry struct {
 	registry *registry.Registry
 	debounce *debounceTracker
-	count    int
 	timeout  string
 	actions  []string
 	sockets  []string
+	count    int
 }
 
 type Dispatcher struct {
-	withBanLog bool
 	banActor   ban.Actor
 	matches    map[string]Entry
+	withBanLog bool
 }
 
 type RuleConfig struct {
 	Name       string
-	Count      int
 	Timeout    string
 	TTL        string
-	MaxEntries int
 	Actions    []string
 	Sockets    []string
+	Count      int
+	MaxEntries int
 }
 
 func Init(ctx context.Context, rules []RuleConfig, banActor ban.Actor, withBanLog bool) error {

@@ -17,8 +17,8 @@ const timeout = 20 * time.Second
 type ActionArgs struct {
 	IP       string
 	Rule     string
-	Offender offender.Offender
 	Actions  []string
+	Offender offender.Offender
 }
 
 func ExecuteCustomAction(ctx context.Context, args ActionArgs) {

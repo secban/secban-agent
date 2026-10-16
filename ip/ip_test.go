@@ -44,7 +44,9 @@ func TestAddrType(t *testing.T) {
 	}
 }
 
-func TestAllowlist(t *testing.T) { //nolint: paralleltest
+func TestAllowlist(t *testing.T) {
+	t.Parallel()
+
 	allowlistContent := `
 # Loopback and local network
 127.0.0.1

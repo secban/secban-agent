@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"gitlab.com/secban/secban-agent/entry"
-	ipc "gitlab.com/secban/secban-agent/ipc"
+	"gitlab.com/secban/secban-agent/ipc"
 	"gitlab.com/secban/secban-agent/offender"
 )
 
