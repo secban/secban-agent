@@ -65,6 +65,11 @@ func (m *Manager) Init(ctx context.Context) error {
 
 func (m *Manager) Exit(ctx context.Context) error {
 	for _, addrType := range m.addressTypes {
+		unlinkErr := m.unlinkSet(ctx, addrType)
+		if unlinkErr != nil {
+			return unlinkErr
+		}
+
 		destroyErr := m.destroySet(ctx, addrType)
 		if destroyErr != nil {
 			return destroyErr
@@ -132,6 +137,13 @@ func (m *Manager) linkSet(ctx context.Context, addrType string) error {
 	}
 
 	// #nosec G204 // We control the arguments and context.
+	checkCmd := exec.CommandContext(ctx, iptableCmd, "-C", "INPUT", "-m", "set", "--match-set", m.set+addrType, "src", "-j", "DROP")
+
+	checkErr := checkCmd.Run()
+	if checkErr == nil {
+		return nil
+	}
+
 	// #nosec G204 // We control the arguments and context.
 	iptableCommand := exec.CommandContext(ctx, iptableCmd, "-I", "INPUT", "-m", "set", "--match-set", m.set+addrType, "src", "-j", "DROP")
 	if zerolog.GlobalLevel() == zerolog.DebugLevel {
@@ -142,6 +154,41 @@ func (m *Manager) linkSet(ctx context.Context, addrType string) error {
 	runErr := iptableCommand.Run()
 	if runErr != nil {
 		return runErr
+	}
+
+	return nil
+}
+
+func (m *Manager) unlinkSet(ctx context.Context, addrType string) error {
+	iptableCmd := iptable4
+	if addrType == ip.IP6 {
+		iptableCmd = iptable6
+	}
+
+	for {
+		// #nosec G204 // We control the arguments and context.
+		checkCmd := exec.CommandContext(ctx, iptableCmd, "-C", "INPUT", "-m", "set", "--match-set", m.set+addrType, "src", "-j", "DROP")
+
+		checkErr := checkCmd.Run()
+		if checkErr != nil {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+
+			break
+		}
+
+		// #nosec G204 // We control the arguments and context.
+		delCmd := exec.CommandContext(ctx, iptableCmd, "-D", "INPUT", "-m", "set", "--match-set", m.set+addrType, "src", "-j", "DROP")
+		if zerolog.GlobalLevel() == zerolog.DebugLevel {
+			delCmd.Stdout = os.Stdout
+			delCmd.Stderr = os.Stderr
+		}
+
+		delErr := delCmd.Run()
+		if delErr != nil {
+			return delErr
+		}
 	}
 
 	return nil

@@ -58,7 +58,10 @@ func main() {
 
 	waitGroup.Wait()
 
-	exitErr := dispatcher.Exit(ctx)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer shutdownCancel()
+
+	exitErr := dispatcher.Exit(shutdownCtx)
 	if exitErr != nil {
 		log.Error().Err(exitErr).Msg("dispatcher exit error")
 	}
