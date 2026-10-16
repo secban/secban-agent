@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	dispatcher "gitlab.com/secban/secban-agent/dispatcher"
+	"gitlab.com/secban/secban-agent/dispatcher"
 	"gitlab.com/secban/secban-agent/ip"
 )
 
@@ -438,7 +438,8 @@ func TestDispatcherReportAndActInvalidIP(t *testing.T) {
 	}
 }
 
-func TestPackageLevelReportAndBan(t *testing.T) { //nolint: paralleltest
+func TestPackageLevelReportAndBan(t *testing.T) {
+	t.Parallel()
 	actor := &fakeBanActor{}
 
 	initErr := dispatcher.Init(context.Background(), []dispatcher.RuleConfig{{

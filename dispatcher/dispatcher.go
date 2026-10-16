@@ -17,7 +17,9 @@ import (
 	"gitlab.com/secban/secban-agent/registry"
 )
 
-var dispatcher *Dispatcher //nolint: gochecknoglobals
+var dispatcher *Dispatcher //nolint:gochecknoglobals
+
+var ErrNotInitialized = errors.New("dispatcher not initialized")
 
 type Entry struct {
 	registry *registry.Registry
@@ -62,7 +64,7 @@ func Init(ctx context.Context, rules []RuleConfig, banActor ban.Actor, withBanLo
 
 func Exit(ctx context.Context) error {
 	if dispatcher == nil {
-		return errors.New("dispatcher not initialized")
+		return ErrNotInitialized
 	}
 
 	return dispatcher.Exit(ctx)
@@ -110,31 +112,31 @@ func (d *Dispatcher) Report(ctx context.Context, address string, rule string, me
 
 	message = d.sanitizeMessage(message)
 
-	offender := entry.registry.Add(address, rule, message)
+	o := entry.registry.Add(address, rule, message)
 
 	log.Debug().
 		Str("ip", address).
 		Str("rule", rule).
-		Int("count", offender.Count).
+		Int("count", o.Count).
 		Int("threshold", entry.count).
 		Msg("offender reported")
 
-	if offender.Count >= entry.count {
+	if o.Count >= entry.count {
 		return d.Act(ctx, address, rule, message)
 	}
 
 	return false, nil
 }
 
-func (d *Dispatcher) Get(ctx context.Context, address string) (*offender.Offender, error) {
+func (d *Dispatcher) Get(_ context.Context, address string) (*offender.Offender, error) {
 	if !ip.IsValid(address) {
 		return nil, errors.New("invalid IP address " + address)
 	}
 
 	for _, entry := range d.matches {
-		offender, exists := entry.registry.Get(address)
-		if exists && offender.Count > 0 {
-			return &offender, nil
+		o, exists := entry.registry.Get(address)
+		if exists && o.Count > 0 {
+			return &o, nil
 		}
 	}
 
@@ -157,16 +159,16 @@ func (d *Dispatcher) Act(ctx context.Context, address string, rule string, messa
 
 	message = d.sanitizeMessage(message)
 
-	offender, found := entry.registry.Get(address)
+	o, found := entry.registry.Get(address)
 	if !found {
-		offender = entry.registry.Add(address, rule, message)
+		o = entry.registry.Add(address, rule, message)
 	}
 
 	log.Info().
 		Str("ip", address).
 		Str("rule", rule).
 		Str("timeout", entry.timeout).
-		Int("count", offender.Count).
+		Int("count", o.Count).
 		Msg("triggering ban action")
 
 	banErr := d.banActor.Block(ctx, address, entry.timeout)
@@ -178,14 +180,14 @@ func (d *Dispatcher) Act(ctx context.Context, address string, rule string, messa
 		return false, nil
 	}
 
-	d.triggerActions(ctx, entry, address, rule, offender)
+	d.triggerActions(ctx, entry, address, rule, o)
 
 	return false, nil
 }
 
 func (d *Dispatcher) Init(ctx context.Context) error {
 	if d.banActor == nil {
-		return errors.New("ban actor not initialized")
+		return ErrNotInitialized
 	}
 
 	initErr := d.banActor.Init(ctx)
@@ -198,7 +200,7 @@ func (d *Dispatcher) Init(ctx context.Context) error {
 
 func (d *Dispatcher) Exit(ctx context.Context) error {
 	if d.banActor == nil {
-		return errors.New("ban actor not initialized")
+		return ErrNotInitialized
 	}
 
 	return d.banActor.Exit(ctx)
@@ -209,12 +211,12 @@ func (d *Dispatcher) triggerActions(
 	entry Entry,
 	address string,
 	rule string,
-	offender offender.Offender,
+	o offender.Offender,
 ) {
 	// Silently log the ban in the background with a new context.
 	if d.withBanLog {
 		logCtx := context.WithoutCancel(ctx)
-		go banlog.Log(logCtx, rule, offender)
+		go banlog.Log(logCtx, rule, o)
 	}
 
 	// Execute custom actions if defined.
@@ -223,7 +225,7 @@ func (d *Dispatcher) triggerActions(
 		go action.ExecuteCustomAction(actionCtx, action.ActionArgs{
 			IP:       address,
 			Rule:     rule,
-			Offender: offender,
+			Offender: o,
 			Actions:  entry.actions,
 		})
 	}
@@ -234,7 +236,7 @@ func (d *Dispatcher) triggerActions(
 		go ipc.Message(ipcCtx, ipc.IPCArgs{
 			IP:       address,
 			Rule:     rule,
-			Offender: offender,
+			Offender: o,
 			Sockets:  entry.sockets,
 		})
 	}
@@ -252,7 +254,7 @@ func (d *Dispatcher) sanitizeMessage(message string) string {
 
 func Report(ctx context.Context, address string, rule string, message string) (bool, error) {
 	if dispatcher == nil {
-		return false, errors.New("dispatcher not initialized")
+		return false, ErrNotInitialized
 	}
 
 	return dispatcher.Report(ctx, address, rule, message)
@@ -260,7 +262,7 @@ func Report(ctx context.Context, address string, rule string, message string) (b
 
 func Ban(ctx context.Context, address string, rule string, message string) (bool, error) {
 	if dispatcher == nil {
-		return false, errors.New("dispatcher not initialized")
+		return false, ErrNotInitialized
 	}
 
 	return dispatcher.Act(ctx, address, rule, message)
@@ -268,7 +270,7 @@ func Ban(ctx context.Context, address string, rule string, message string) (bool
 
 func Get(ctx context.Context, address string) (*offender.Offender, error) {
 	if dispatcher == nil {
-		return nil, errors.New("dispatcher not initialized")
+		return nil, ErrNotInitialized
 	}
 
 	return dispatcher.Get(ctx, address)

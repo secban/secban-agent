@@ -24,14 +24,14 @@ const (
 	nftCmd = "/usr/sbin/nft"
 )
 
-type NftCommand struct {
+type Command struct {
 	Table string
 	Chain string
 	Set   string
 	Cmd   string
 }
 
-type NftManager struct {
+type Manager struct {
 	table        string
 	chain        string
 	set          string
@@ -40,10 +40,10 @@ type NftManager struct {
 	lock         sync.Mutex
 }
 
-var _ ban.Actor = (*NftManager)(nil)
+var _ ban.Actor = (*Manager)(nil)
 
-func New() *NftManager {
-	return &NftManager{
+func New() *Manager {
+	return &Manager{
 		table:        table,
 		chain:        chain,
 		set:          set,
@@ -52,33 +52,33 @@ func New() *NftManager {
 	}
 }
 
-func (n *NftManager) Block(ctx context.Context, ip string, timeout string) error {
-	return n.ban(ctx, ip, timeout)
+func (m *Manager) Block(ctx context.Context, address string, banDuration string) error {
+	return m.ban(ctx, address, banDuration)
 }
 
-func (n *NftManager) Init(ctx context.Context) error {
-	return n.Flush(ctx)
+func (m *Manager) Init(ctx context.Context) error {
+	return m.Flush(ctx)
 }
 
-func (n *NftManager) Exit(ctx context.Context) error {
-	return n.cleanupTables(ctx)
+func (m *Manager) Exit(ctx context.Context) error {
+	return m.cleanupTables(ctx)
 }
 
-func (n *NftManager) Flush(ctx context.Context) error {
-	cleanupErr := n.cleanupTables(ctx)
+func (m *Manager) Flush(ctx context.Context) error {
+	cleanupErr := m.cleanupTables(ctx)
 	if cleanupErr != nil {
 		return cleanupErr
 	}
 
-	return n.initTables(ctx)
+	return m.initTables(ctx)
 }
 
-func (n *NftManager) execCommand(ctx context.Context, args ...string) error {
-	n.lock.Lock()
-	defer n.lock.Unlock()
+func (m *Manager) execCommand(ctx context.Context, args ...string) error {
+	m.lock.Lock()
+	defer m.lock.Unlock()
 
-	//#nosec G204 // We control the arguments and context.
-	execCmd := exec.CommandContext(ctx, n.nftCmd, args...)
+	// #nosec G204 // We control the arguments and context.
+	execCmd := exec.CommandContext(ctx, m.nftCmd, args...)
 
 	var stderrBuf bytes.Buffer
 
@@ -102,16 +102,16 @@ func (n *NftManager) execCommand(ctx context.Context, args ...string) error {
 	return nil
 }
 
-func (n *NftManager) cleanupTables(ctx context.Context) error {
-	for _, addrType := range n.addressTypes {
+func (m *Manager) cleanupTables(ctx context.Context) error {
+	for _, addrType := range m.addressTypes {
 		args := []string{
 			"destroy",
 			"table",
 			addrType,
-			n.table,
+			m.table,
 		}
 
-		runErr := n.execCommand(ctx, args...)
+		runErr := m.execCommand(ctx, args...)
 		if runErr != nil {
 			return runErr
 		}
@@ -120,24 +120,24 @@ func (n *NftManager) cleanupTables(ctx context.Context) error {
 	return nil
 }
 
-func (n *NftManager) initTables(ctx context.Context) error {
-	for _, addrType := range n.addressTypes {
-		tableErr := n.createTable(ctx, addrType)
+func (m *Manager) initTables(ctx context.Context) error {
+	for _, addrType := range m.addressTypes {
+		tableErr := m.createTable(ctx, addrType)
 		if tableErr != nil {
 			return tableErr
 		}
 
-		chainErr := n.createChain(ctx, addrType)
+		chainErr := m.createChain(ctx, addrType)
 		if chainErr != nil {
 			return chainErr
 		}
 
-		setErr := n.createSet(ctx, addrType)
+		setErr := m.createSet(ctx, addrType)
 		if setErr != nil {
 			return setErr
 		}
 
-		ruleErr := n.createRule(ctx, addrType)
+		ruleErr := m.createRule(ctx, addrType)
 		if ruleErr != nil {
 			return ruleErr
 		}
@@ -146,31 +146,31 @@ func (n *NftManager) initTables(ctx context.Context) error {
 	return nil
 }
 
-func (n *NftManager) createTable(ctx context.Context, addrType string) error {
+func (m *Manager) createTable(ctx context.Context, addrType string) error {
 	args := []string{
 		"add",
 		"table",
 		addrType,
-		n.table,
+		m.table,
 	}
 
-	return n.execCommand(ctx, args...)
+	return m.execCommand(ctx, args...)
 }
 
-func (n *NftManager) createChain(ctx context.Context, addrType string) error {
+func (m *Manager) createChain(ctx context.Context, addrType string) error {
 	args := []string{
 		"add",
 		"chain",
 		addrType,
-		n.table,
-		n.chain,
+		m.table,
+		m.chain,
 		"{ type filter hook input priority -10 ; }",
 	}
 
-	return n.execCommand(ctx, args...)
+	return m.execCommand(ctx, args...)
 }
 
-func (n *NftManager) createSet(ctx context.Context, addrType string) error {
+func (m *Manager) createSet(ctx context.Context, addrType string) error {
 	iptype := "ipv4_addr"
 	if addrType == ip.IP6 {
 		iptype = "ipv6_addr"
@@ -180,37 +180,37 @@ func (n *NftManager) createSet(ctx context.Context, addrType string) error {
 		"add",
 		"set",
 		addrType,
-		n.table,
-		n.set,
+		m.table,
+		m.set,
 		"{ type " + iptype + " ; flags timeout ; }",
 	}
 
-	return n.execCommand(ctx, args...)
+	return m.execCommand(ctx, args...)
 }
 
-func (n *NftManager) createRule(ctx context.Context, addrType string) error {
+func (m *Manager) createRule(ctx context.Context, addrType string) error {
 	args := []string{
 		"add",
 		"rule",
 		addrType,
-		n.table,
-		n.chain,
+		m.table,
+		m.chain,
 		addrType,
 		"saddr",
-		"@" + n.set,
+		"@" + m.set,
 		"drop",
 	}
 
-	return n.execCommand(ctx, args...)
+	return m.execCommand(ctx, args...)
 }
 
-func (n *NftManager) ban(ctx context.Context, address string, duration string) error {
+func (m *Manager) ban(ctx context.Context, address string, banDuration string) error {
 	addrType, addrTypeErr := ip.AddrType(address)
 	if addrTypeErr != nil {
 		return addrTypeErr
 	}
 
-	if !timeout.IsValid(duration) {
+	if !timeout.IsValid(banDuration) {
 		return errors.New("invalid timeout format")
 	}
 
@@ -218,10 +218,10 @@ func (n *NftManager) ban(ctx context.Context, address string, duration string) e
 		"add",
 		"element",
 		addrType,
-		n.table,
-		n.set,
-		"{ " + address + " timeout " + duration + " }",
+		m.table,
+		m.set,
+		"{ " + address + " timeout " + banDuration + " }",
 	}
 
-	return n.execCommand(ctx, args...)
+	return m.execCommand(ctx, args...)
 }
