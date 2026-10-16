@@ -1,12 +1,17 @@
 package nft
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 
+	"github.com/rs/zerolog"
 	"gitlab.com/secban/secban-agent/ban"
 	"gitlab.com/secban/secban-agent/ip"
 	"gitlab.com/secban/secban-agent/timeout"
@@ -43,7 +48,7 @@ func New() *NftManager {
 		chain:        chain,
 		set:          set,
 		nftCmd:       nftCmd,
-		addressTypes: []string{"ip", "ip6"},
+		addressTypes: []string{ip.IP4, ip.IP6},
 	}
 }
 
@@ -75,11 +80,22 @@ func (n *NftManager) execCommand(ctx context.Context, args ...string) error {
 	//#nosec G204 // We control the arguments and context.
 	execCmd := exec.CommandContext(ctx, n.nftCmd, args...)
 
-	execCmd.Stdout = os.Stdout
-	execCmd.Stderr = os.Stderr
+	var stderrBuf bytes.Buffer
+
+	if zerolog.GlobalLevel() == zerolog.DebugLevel {
+		execCmd.Stdout = os.Stdout
+		execCmd.Stderr = io.MultiWriter(os.Stderr, &stderrBuf)
+	} else {
+		execCmd.Stderr = &stderrBuf
+	}
 
 	runErr := execCmd.Run()
 	if runErr != nil {
+		stderrStr := strings.TrimSpace(stderrBuf.String())
+		if stderrStr != "" {
+			return fmt.Errorf("%w: %s", runErr, stderrStr)
+		}
+
 		return runErr
 	}
 
@@ -156,7 +172,7 @@ func (n *NftManager) createChain(ctx context.Context, addrType string) error {
 
 func (n *NftManager) createSet(ctx context.Context, addrType string) error {
 	iptype := "ipv4_addr"
-	if addrType == "ip6" {
+	if addrType == ip.IP6 {
 		iptype = "ipv6_addr"
 	}
 

@@ -1,11 +1,15 @@
 package ipset
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/rs/zerolog"
@@ -15,10 +19,13 @@ import (
 )
 
 const (
-	set      = "secban"
-	ipsetCmd = "/usr/sbin/ipset"
-	iptable4 = "/usr/sbin/iptables"
-	iptable6 = "/usr/sbin/ip6tables"
+	ipSetName           = "secban"
+	ipsetCmd            = "/usr/sbin/ipset"
+	iptablesChain       = "INPUT"
+	iptable4            = "/usr/sbin/iptables"
+	iptable6            = "/usr/sbin/ip6tables"
+	iptablesRuleMissing = 1
+	existFlag           = "-exist"
 )
 
 type Command struct {
@@ -28,6 +35,7 @@ type Command struct {
 
 type Manager struct {
 	set          string
+	chain        string
 	ipsetCmd     string
 	addressTypes []string
 	lock         sync.Mutex
@@ -37,7 +45,8 @@ var _ ban.Actor = (*Manager)(nil)
 
 func New() *Manager {
 	return &Manager{
-		set:          set,
+		set:          ipSetName,
+		chain:        iptablesChain,
 		ipsetCmd:     ipsetCmd,
 		addressTypes: []string{ip.IP4, ip.IP6},
 	}
@@ -97,13 +106,56 @@ func (m *Manager) execCommand(ctx context.Context, args ...string) error {
 	// #nosec G204 // We control the arguments and context.
 	execCmd := exec.CommandContext(ctx, m.ipsetCmd, args...)
 
+	var stderrBuf bytes.Buffer
+
 	if zerolog.GlobalLevel() == zerolog.DebugLevel {
 		execCmd.Stdout = os.Stdout
-		execCmd.Stderr = os.Stderr
+		execCmd.Stderr = io.MultiWriter(os.Stderr, &stderrBuf)
+	} else {
+		execCmd.Stderr = &stderrBuf
 	}
 
 	runErr := execCmd.Run()
 	if runErr != nil {
+		stderrStr := strings.TrimSpace(stderrBuf.String())
+		if stderrStr != "" {
+			return fmt.Errorf("%w: %s", runErr, stderrStr)
+		}
+
+		return runErr
+	}
+
+	return nil
+}
+
+func (m *Manager) execIPCommand(ctx context.Context, addrType string, args ...string) error {
+	iptableCmd := iptable4
+	if addrType == ip.IP6 {
+		iptableCmd = iptable6
+	}
+
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	// #nosec G204 // We control the arguments and context.
+	execCmd := exec.CommandContext(ctx, iptableCmd, args...)
+
+	var stderrBuf bytes.Buffer
+
+	if zerolog.GlobalLevel() == zerolog.DebugLevel {
+		execCmd.Stdout = os.Stdout
+		execCmd.Stderr = io.MultiWriter(os.Stderr, &stderrBuf)
+	} else {
+		execCmd.Stderr = &stderrBuf
+	}
+
+	runErr := execCmd.Run()
+	if runErr != nil {
+		stderrStr := strings.TrimSpace(stderrBuf.String())
+		if stderrStr != "" {
+			return fmt.Errorf("%w: %s", runErr, stderrStr)
+		}
+
 		return runErr
 	}
 
@@ -118,7 +170,7 @@ func (m *Manager) createSet(ctx context.Context, addrType string) error {
 
 	args := []string{
 		"create",
-		"-exist",
+		existFlag,
 		m.set + addrType,
 		"hash:ip",
 		"family",
@@ -130,72 +182,67 @@ func (m *Manager) createSet(ctx context.Context, addrType string) error {
 	return m.execCommand(ctx, args...)
 }
 
-func (m *Manager) linkSet(ctx context.Context, addrType string) error {
-	iptableCmd := iptable4
-	if addrType == ip.IP6 {
-		iptableCmd = iptable6
+func (m *Manager) getlinkArgs(addrType string) []string {
+	return []string{m.chain, "-m", "set", "--match-set", m.set + addrType, "src", "-j", "DROP"}
+}
+
+func (m *Manager) setInChain(ctx context.Context, addrType string) (bool, error) {
+	checkArgs := append([]string{"-C"}, m.getlinkArgs(addrType)...)
+
+	checkErr := m.execIPCommand(ctx, addrType, checkArgs...)
+	if checkErr == nil {
+		return true, nil
 	}
 
-	// #nosec G204 // We control the arguments and context.
-	checkCmd := exec.CommandContext(ctx, iptableCmd, "-C", "INPUT", "-m", "set", "--match-set", m.set+addrType, "src", "-j", "DROP")
+	var exitErr *exec.ExitError
+	if errors.As(checkErr, &exitErr) && exitErr.ExitCode() == iptablesRuleMissing {
+		return false, nil
+	}
 
-	checkErr := checkCmd.Run()
-	if checkErr == nil {
+	if strings.Contains(checkErr.Error(), "doesn't exist") {
+		return false, nil
+	}
+
+	return false, checkErr
+}
+
+func (m *Manager) linkSet(ctx context.Context, addrType string) error {
+	exists, existsErr := m.setInChain(ctx, addrType)
+	if existsErr != nil {
+		return existsErr
+	}
+
+	if exists {
 		return nil
 	}
 
-	// #nosec G204 // We control the arguments and context.
-	iptableCommand := exec.CommandContext(ctx, iptableCmd, "-I", "INPUT", "-m", "set", "--match-set", m.set+addrType, "src", "-j", "DROP")
-	if zerolog.GlobalLevel() == zerolog.DebugLevel {
-		iptableCommand.Stdout = os.Stdout
-		iptableCommand.Stderr = os.Stderr
-	}
+	insertArgs := append([]string{"-I"}, m.getlinkArgs(addrType)...)
 
-	runErr := iptableCommand.Run()
-	if runErr != nil {
-		return runErr
+	insertErr := m.execIPCommand(ctx, addrType, insertArgs...)
+	if insertErr != nil {
+		return insertErr
 	}
 
 	return nil
 }
 
 func (m *Manager) unlinkSet(ctx context.Context, addrType string) error {
-	iptableCmd := iptable4
-	if addrType == ip.IP6 {
-		iptableCmd = iptable6
+	exists, existsErr := m.setInChain(ctx, addrType)
+	if existsErr != nil {
+		return existsErr
 	}
 
-	for {
-		// #nosec G204 // We control the arguments and context.
-		checkCmd := exec.CommandContext(ctx, iptableCmd, "-C", "INPUT", "-m", "set", "--match-set", m.set+addrType, "src", "-j", "DROP")
-
-		checkErr := checkCmd.Run()
-		if checkErr != nil {
-			if ctx.Err() != nil {
-				return ctx.Err()
-			}
-
-			break
-		}
-
-		// #nosec G204 // We control the arguments and context.
-		delCmd := exec.CommandContext(ctx, iptableCmd, "-D", "INPUT", "-m", "set", "--match-set", m.set+addrType, "src", "-j", "DROP")
-		if zerolog.GlobalLevel() == zerolog.DebugLevel {
-			delCmd.Stdout = os.Stdout
-			delCmd.Stderr = os.Stderr
-		}
-
-		delErr := delCmd.Run()
-		if delErr != nil {
-			return delErr
-		}
+	if !exists {
+		return nil
 	}
 
-	return nil
+	delArgs := append([]string{"-D"}, m.getlinkArgs(addrType)...)
+
+	return m.execIPCommand(ctx, addrType, delArgs...)
 }
 
 func (m *Manager) destroySet(ctx context.Context, addrType string) error {
-	return m.execCommand(ctx, "destroy", m.set+addrType)
+	return m.execCommand(ctx, "destroy", existFlag, m.set+addrType)
 }
 
 func (m *Manager) flushSet(ctx context.Context, addrType string) error {
@@ -221,7 +268,7 @@ func (m *Manager) ban(ctx context.Context, address string, duration string) erro
 
 	args := []string{
 		"add",
-		"-exist",
+		existFlag,
 		setName,
 		address,
 		"timeout",
