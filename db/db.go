@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	_ "modernc.org/sqlite"
+	_ "modernc.org/sqlite" // SQLite driver.
 )
 
 type LogEntry struct {
@@ -19,12 +19,13 @@ type LogEntry struct {
 }
 
 const (
-	dbOptions       = "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&synchronous(normal)&optimize"
-	maxOpenConns    = 1
-	maxIdleConns    = 1
-	connMaxLifetime = 0
-	dirMode         = 0o770
-	dbFileMode      = 0o660
+	dbOptions           = "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&synchronous(normal)&optimize"
+	maxOpenConns        = 1
+	maxIdleConns        = 1
+	connMaxLifetime     = 0
+	dirMode             = 0o770
+	dbFileMode          = 0o660
+	createSchemaRetries = 3
 )
 
 var database *sql.DB //nolint:gochecknoglobals
@@ -89,7 +90,7 @@ func createDB(dbPath string) error {
 	return nil
 }
 
-func DB(ctx context.Context) (*sql.DB, error) {
+func DB(_ context.Context) (*sql.DB, error) {
 	if database == nil {
 		return nil, errors.New("database is not initialized; call db.Init() first")
 	}
@@ -114,7 +115,7 @@ func CloseDB(db *sql.DB) error {
 
 func CreateSchema(ctx context.Context, db *sql.DB) error {
 	var err error
-	for attempt := range 3 {
+	for attempt := range createSchemaRetries {
 		_, err = db.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS bans (
 			ip TEXT,

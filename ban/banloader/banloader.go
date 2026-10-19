@@ -9,7 +9,7 @@ import (
 	"gitlab.com/secban/secban-agent/ban/nft"
 )
 
-func Load(name string) (ban.Actor, error) { //nolint: ireturn // It's just a convenience wrapper.
+func Load(name string) (ban.Actor, error) { //nolint:ireturn // It's just a convenience wrapper.
 	switch name {
 	case "dummy":
 		return dummy.New(), nil

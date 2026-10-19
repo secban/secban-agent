@@ -39,7 +39,7 @@ func TestExecuteCustomActionRunsAllConfiguredActions(t *testing.T) {
 		t.Fatalf("write second script: %v", writeErr)
 	}
 
-	args := action.ActionArgs{
+	args := action.Args{
 		IP:      "192.0.2.100",
 		Rule:    "bad",
 		Actions: []string{firstScript, secondScript},
@@ -81,7 +81,7 @@ func TestExecuteCustomActionCancelsWhenPastTimeout(t *testing.T) {
 		t.Fatalf("write timeout script: %v", writeErr)
 	}
 
-	args := action.ActionArgs{
+	args := action.Args{
 		IP:      "192.0.2.101",
 		Rule:    "bad",
 		Actions: []string{scriptPath},

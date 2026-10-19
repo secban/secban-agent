@@ -26,6 +26,9 @@ const (
 	shutdownTimeout = 5 * time.Second
 	socketMode      = 0o660
 	maxHeaderBytes  = 8192
+	tcpReadTimeout  = 1 * time.Second
+	tcpWriteTimeout = 1 * time.Second
+	tcpIdleTimeout  = 1 * time.Second
 )
 
 func main() {
@@ -46,7 +49,7 @@ func main() {
 
 	if conf.ListenTCP != "" {
 		waitGroup.Go(func() {
-			listenTcp(ctx, conf.ListenTCP)
+			listenTCP(ctx, conf.ListenTCP)
 		})
 	}
 
@@ -71,6 +74,7 @@ func loadConf() *config.Config {
 	var configDir string
 
 	flag.StringVar(&configDir, "config", "/etc/secban", "path to config directory")
+
 	flag.Parse()
 
 	conf, confErr := config.LoadConfig(configDir)
@@ -113,13 +117,13 @@ func dispatcherInit(ctx context.Context, conf *config.Config) {
 	}
 }
 
-func listenTcp(ctx context.Context, addr string) {
+func listenTCP(ctx context.Context, addr string) {
 	server := &http.Server{
 		Addr:              addr,
 		Handler:           router.NewRouter(),
-		ReadTimeout:       1 * time.Second,
-		ReadHeaderTimeout: 1 * time.Second,
-		WriteTimeout:      1 * time.Second,
+		ReadTimeout:       tcpReadTimeout,
+		ReadHeaderTimeout: tcpReadTimeout,
+		WriteTimeout:      tcpWriteTimeout,
 		MaxHeaderBytes:    maxHeaderBytes,
 	}
 
@@ -154,9 +158,10 @@ func listenTcp(ctx context.Context, addr string) {
 func listenUnix(ctx context.Context, addr string) {
 	server := &http.Server{
 		Handler:           router.NewRouter(),
-		ReadTimeout:       1 * time.Second,
-		ReadHeaderTimeout: 1 * time.Second,
-		WriteTimeout:      1 * time.Second,
+		ReadTimeout:       tcpReadTimeout,
+		ReadHeaderTimeout: tcpReadTimeout,
+		WriteTimeout:      tcpWriteTimeout,
+		IdleTimeout:       tcpIdleTimeout,
 		MaxHeaderBytes:    maxHeaderBytes,
 	}
 

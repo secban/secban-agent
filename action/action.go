@@ -14,14 +14,14 @@ import (
 
 const timeout = 20 * time.Second
 
-type ActionArgs struct {
+type Args struct {
 	IP       string
 	Rule     string
 	Actions  []string
 	Offender offender.Offender
 }
 
-func ExecuteCustomAction(ctx context.Context, args ActionArgs) {
+func ExecuteCustomAction(ctx context.Context, args Args) {
 	if len(args.Actions) == 0 {
 		log.Warn().
 			Str("ip", args.IP).

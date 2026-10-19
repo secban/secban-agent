@@ -14,7 +14,7 @@ func TestParseMessageRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
-	msg := ipc.IPCMessage{
+	msg := ipc.Message{
 		IP:   "192.17.1.111",
 		Rule: "bad",
 		Offender: offender.Offender{
@@ -41,7 +41,7 @@ func TestParseMessageRoundTrip(t *testing.T) {
 	assertParsedMessageMatches(t, msg, parsed)
 }
 
-func assertParsedMessageMatches(t *testing.T, expected, actual ipc.IPCMessage) {
+func assertParsedMessageMatches(t *testing.T, expected, actual ipc.Message) {
 	t.Helper()
 
 	if actual.IP != expected.IP {

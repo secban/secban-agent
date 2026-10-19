@@ -222,7 +222,7 @@ func (d *Dispatcher) triggerActions(
 	// Execute custom actions if defined.
 	if len(entry.actions) > 0 {
 		actionCtx := context.WithoutCancel(ctx)
-		go action.ExecuteCustomAction(actionCtx, action.ActionArgs{
+		go action.ExecuteCustomAction(actionCtx, action.Args{
 			IP:       address,
 			Rule:     rule,
 			Offender: o,
@@ -233,7 +233,7 @@ func (d *Dispatcher) triggerActions(
 	// Send IPC messages.
 	if len(entry.sockets) > 0 {
 		ipcCtx := context.WithoutCancel(ctx)
-		go ipc.Message(ipcCtx, ipc.IPCArgs{
+		go ipc.Send(ipcCtx, ipc.Args{
 			IP:       address,
 			Rule:     rule,
 			Offender: o,
@@ -242,7 +242,7 @@ func (d *Dispatcher) triggerActions(
 	}
 }
 
-func (d *Dispatcher) sanitizeMessage(message string) string {
+func (*Dispatcher) sanitizeMessage(message string) string {
 	return strings.Map(func(r rune) rune {
 		if unicode.IsPrint(r) {
 			return r

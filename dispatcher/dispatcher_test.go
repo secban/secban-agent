@@ -17,8 +17,8 @@ type fakeBanActor struct {
 	exited  bool
 }
 
-func (f *fakeBanActor) Block(_ context.Context, ip string, timeout string) error {
-	f.blocked = append(f.blocked, ip+":"+timeout)
+func (f *fakeBanActor) Block(_ context.Context, address string, timeout string) error {
+	f.blocked = append(f.blocked, address+":"+timeout)
 	return nil
 }
 
@@ -32,7 +32,7 @@ func (f *fakeBanActor) Exit(_ context.Context) error {
 	return nil
 }
 
-func (f *fakeBanActor) Flush(_ context.Context) error {
+func (*fakeBanActor) Flush(_ context.Context) error {
 	return nil
 }
 
@@ -54,10 +54,8 @@ func TestMain(m *testing.M) {
 		panic(ipErr)
 	}
 
-	exitCode := m.Run()
+	_ = m.Run()
 	_ = os.RemoveAll(tempDir)
-
-	os.Exit(exitCode)
 }
 
 func TestDispatcherReportTriggersBlockAtThreshold(t *testing.T) {
@@ -440,6 +438,7 @@ func TestDispatcherReportAndActInvalidIP(t *testing.T) {
 
 func TestPackageLevelReportAndBan(t *testing.T) {
 	t.Parallel()
+
 	actor := &fakeBanActor{}
 
 	initErr := dispatcher.Init(context.Background(), []dispatcher.RuleConfig{{

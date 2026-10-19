@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -52,11 +51,9 @@ func TestMain(m *testing.M) {
 
 	testServer = httptest.NewServer(router.NewRouter())
 
-	exitCode := m.Run()
+	_ = m.Run()
 
 	testServer.Close()
-
-	os.Exit(exitCode)
 }
 
 func httpGet(ctx context.Context, targetURL string) (*http.Response, error) {

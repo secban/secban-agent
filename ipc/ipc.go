@@ -13,20 +13,20 @@ import (
 
 const timeout = 1 * time.Second
 
-type IPCArgs struct {
+type Args struct {
 	IP       string
 	Rule     string
 	Sockets  []string
 	Offender offender.Offender
 }
 
-type IPCMessage struct {
+type Message struct {
 	IP       string            `json:"ip"`
 	Rule     string            `json:"rule"`
 	Offender offender.Offender `json:"offender"`
 }
 
-func Message(ctx context.Context, args IPCArgs) {
+func Send(ctx context.Context, args Args) {
 	log.Debug().
 		Str("ip", args.IP).
 		Str("rule", args.Rule).
@@ -42,7 +42,7 @@ func Message(ctx context.Context, args IPCArgs) {
 		return
 	}
 
-	msg := IPCMessage{
+	msg := Message{
 		IP:       args.IP,
 		Rule:     args.Rule,
 		Offender: args.Offender,
@@ -110,8 +110,8 @@ func message(ctx context.Context, socket string, message []byte) {
 	}
 }
 
-func ParseMessage(message []byte) (IPCMessage, error) {
-	var msg IPCMessage
+func ParseMessage(message []byte) (Message, error) {
+	var msg Message
 
 	err := json.Unmarshal(message, &msg)
 

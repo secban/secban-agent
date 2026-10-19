@@ -10,6 +10,8 @@ import (
 	"gitlab.com/secban/secban-agent/offender"
 )
 
+const databaseConnectionErrorMessage = "Failed to get database connection"
+
 type Entry struct {
 	IP     string
 	Rule   string
@@ -30,13 +32,13 @@ func Log(ctx context.Context, rule string, o offender.Offender) {
 		return
 	}
 
-	db, err := db.DB(ctx)
+	database, err := db.DB(ctx)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get database connection")
+		log.Error().Err(err).Msg(databaseConnectionErrorMessage)
 		return
 	}
 
-	r, err := db.ExecContext(ctx, `
+	r, err := database.ExecContext(ctx, `
 		INSERT OR REPLACE INTO bans (ip, rule, ban, events)
 		VALUES (?, ?, ?, ?);
 	`, o.IP, rule, o.Timestamp, string(marshalled))
@@ -46,13 +48,13 @@ func Log(ctx context.Context, rule string, o offender.Offender) {
 }
 
 func Get(ctx context.Context, ip string) (*Entry, error) {
-	db, initErr := db.DB(ctx)
+	database, initErr := db.DB(ctx)
 	if initErr != nil {
-		log.Error().Err(initErr).Msg("Failed to get database connection")
+		log.Error().Err(initErr).Msg(databaseConnectionErrorMessage)
 		return nil, initErr
 	}
 
-	row := db.QueryRowContext(ctx, `
+	row := database.QueryRowContext(ctx, `
 		SELECT ip, rule, ban, events
 		FROM bans
 		WHERE ip = ?
@@ -72,13 +74,13 @@ func Get(ctx context.Context, ip string) (*Entry, error) {
 }
 
 func GetAllFrom(ctx context.Context, from time.Time) ([]*Entry, error) {
-	db, initErr := db.DB(ctx)
+	database, initErr := db.DB(ctx)
 	if initErr != nil {
-		log.Error().Err(initErr).Msg("Failed to get database connection")
+		log.Error().Err(initErr).Msg(databaseConnectionErrorMessage)
 		return nil, initErr
 	}
 
-	rows, queryErr := db.QueryContext(ctx, `
+	rows, queryErr := database.QueryContext(ctx, `
 		SELECT ip, rule, ban, events
 		FROM bans
 		WHERE ban >= ?

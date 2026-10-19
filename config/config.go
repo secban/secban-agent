@@ -276,7 +276,7 @@ func transformRule(
 		return dispatcher.RuleConfig{}, fmt.Errorf("rule %s: %w", name, countErr)
 	}
 
-	timeout, timeoutErr := resolveDuration(rule.BanDuration, rulesDefaultConfig.BanDuration)
+	banDuration, timeoutErr := resolveDuration(rule.BanDuration, rulesDefaultConfig.BanDuration)
 	if timeoutErr != nil {
 		return dispatcher.RuleConfig{}, fmt.Errorf(
 			"rule %s: invalid ban duration: %w",
@@ -302,7 +302,7 @@ func transformRule(
 	return dispatcher.RuleConfig{
 		Name:       name,
 		Count:      count,
-		Timeout:    timeout,
+		Timeout:    banDuration,
 		TTL:        ttl,
 		MaxEntries: maxEntries,
 		Actions:    resolveActions(rule.Actions, rulesDefaultConfig.Actions),

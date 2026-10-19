@@ -15,16 +15,16 @@ const (
 	socketMode = 0o660
 )
 
-func ListenUnixSocket(socketPath string, handler func(msg IPCMessage) error) {
+func ListenUnixSocket(socketPath string, handler func(msg Message) error) error {
 	removeExistingSocket(socketPath)
 
-	socket, err := createUnixListener(socketPath)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create unix socket")
+	socket, socketErr := createUnixListener(socketPath)
+	if socketErr != nil {
+		log.Error().Err(socketErr).Msg("failed to create unix socket")
 
 		_ = os.Remove(socketPath)
 
-		os.Exit(1)
+		return socketErr
 	}
 	defer socket.Close()
 
@@ -39,12 +39,12 @@ func ListenUnixSocket(socketPath string, handler func(msg IPCMessage) error) {
 		conn, err := socket.AcceptUnix()
 		if err != nil {
 			if errors.Is(err, net.ErrClosed) {
-				return
+				return nil
 			}
 
 			log.Error().Err(err).Msg("failed to accept connection")
 
-			return
+			return nil
 		}
 
 		go handleIncomingConnection(conn, handler)
@@ -90,7 +90,7 @@ func shutdownOnSignal(socket *net.UnixListener, socketPath string, signals <-cha
 	}
 }
 
-func handleIncomingConnection(conn *net.UnixConn, handler func(msg IPCMessage) error) {
+func handleIncomingConnection(conn *net.UnixConn, handler func(msg Message) error) {
 	defer conn.Close()
 
 	buf := make([]byte, bufferSize)

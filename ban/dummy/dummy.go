@@ -7,30 +7,30 @@ import (
 	"gitlab.com/secban/secban-agent/ban"
 )
 
-type DummyManager struct{}
+type Manager struct{}
 
-var _ ban.Actor = (*DummyManager)(nil)
+var _ ban.Actor = (*Manager)(nil)
 
-func New() *DummyManager {
-	return &DummyManager{}
+func New() *Manager {
+	return &Manager{}
 }
 
-func (n *DummyManager) Block(ctx context.Context, ip string, timeout string) error {
+func (*Manager) Block(_ context.Context, ip string, timeout string) error {
 	log.Info().Str("ip", ip).Str("timeout", timeout).Msg("Blocking IP with dummy manager")
 	return nil
 }
 
-func (n *DummyManager) Init(ctx context.Context) error {
+func (*Manager) Init(_ context.Context) error {
 	log.Info().Msg("Initializing dummy manager")
 	return nil
 }
 
-func (n *DummyManager) Exit(ctx context.Context) error {
+func (*Manager) Exit(_ context.Context) error {
 	log.Info().Msg("Exiting dummy manager")
 	return nil
 }
 
-func (n *DummyManager) Flush(ctx context.Context) error {
+func (*Manager) Flush(_ context.Context) error {
 	log.Info().Msg("Flushing dummy manager")
 	return nil
 }
