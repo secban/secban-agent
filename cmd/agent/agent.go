@@ -72,9 +72,9 @@ func main() {
 
 func loadConf() *config.Config {
 	var configDir string
-
+	//nolint:revive,nolintlint // Not a deep-exit, just split from main() for readability.
 	flag.StringVar(&configDir, "config", "/etc/secban", "path to config directory")
-
+	//nolint:revive,nolintlint
 	flag.Parse()
 
 	conf, confErr := config.LoadConfig(configDir)

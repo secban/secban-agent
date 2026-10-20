@@ -48,8 +48,9 @@ linters:
       rules:
         - name: add-constant
           arguments:
-            - allow-ints: "0,1,2"
-            - allow-empty-strings: "true"
+            - maxLitCount: "3"
+              allowInts: "0,1,2"
+              allowStrs: '"","add","update","delete"'
           exclude:
             - "**/*_test.go"
         - name: cognitive-complexity
