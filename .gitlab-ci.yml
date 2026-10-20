@@ -18,6 +18,8 @@ variables:
     GOPATH: $CI_PROJECT_DIR/.go
   before_script:
     - mkdir -p .go
+    - which nfpm >/dev/null 2>&1 || go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+    - export PATH="$GOPATH/bin:$PATH"
   cache:
     paths:
       - .go
@@ -77,7 +79,7 @@ prepare_release:
               --upload-file "$file" \
               "$PACKAGE_REGISTRY_URL/$filename"
               
-          echo "{\"name\":\"${filename}\",\"url\":\"${PACKAGE_REGISTRY_URL}/${filename}\"}" > "release_assets/${OS}_${ARCH}.json"
+          echo "{\"name\":\"${filename}\",\"url\":\"${PACKAGE_REGISTRY_URL}/${filename}\"}" > "release_assets/${filename}.json"
         fi
       done
   rules:

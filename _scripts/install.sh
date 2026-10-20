@@ -16,9 +16,9 @@ if ! getent group secban >/dev/null 2>&1; then
     groupadd --system secban
 fi
 
-# Create user for the secban-agent in the secban group.
-if ! id -u secban-agent >/dev/null 2>&1; then
-    useradd --no-create-home --system --shell /usr/sbin/nologin --gid secban secban-agent
+# Create user for secban in the secban group.
+if ! id -u secban >/dev/null 2>&1; then
+    useradd --no-create-home --system --shell /sbin/nologin --gid secban secban
 fi
 
 # Install the secban-agent binary.
@@ -31,12 +31,12 @@ chmod 0755 "/usr/bin/secban-agent-configcheck"
 
 # Create the runtime directory for secban-agent.
 mkdir -p /var/run/secban
-chown secban-agent:secban /var/run/secban
+chown secban:secban /var/run/secban
 chmod 0770 /var/run/secban
 
 # Create the database directory for secban-agent.
 mkdir -p /var/lib/secban
-chown secban-agent:secban /var/lib/secban
+chown secban:secban /var/lib/secban
 chmod 0770 /var/lib/secban
 
 # Install the example agent configuration.

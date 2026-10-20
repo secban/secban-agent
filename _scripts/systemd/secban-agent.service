@@ -4,7 +4,7 @@ After=network.target
 ConditionPathExists=/usr/sbin/secban-agent
 
 [Service]
-User=secban-agent
+User=secban
 Group=secban
 Type=exec
 ExecStart=/usr/sbin/secban-agent

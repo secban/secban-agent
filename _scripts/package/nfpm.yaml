@@ -1,0 +1,75 @@
+# yaml-language-server: $schema=https://nfpm.goreleaser.com/schema.json
+name: "secban-agent"
+arch: "${ARCH}"
+platform: "${GOOS}"
+version: "${VERSION}"
+section: "net"
+priority: "optional"
+maintainer: "Pascal <pm98zz.c@gmail.com>"
+description: "Central enforcement daemon of the SecBan framework"
+vendor: "SecBan"
+homepage: "https://gitlab.com/secban/secban-agent"
+license: "GPL-3.0"
+
+scripts:
+  preinstall: "./preinstall.sh"
+  postinstall: "./postinstall.sh"
+  preremove: "./preremove.sh"
+  postremove: "./postremove.sh"
+
+contents:
+  - src: "${BIN_DIR}/secban-agent"
+    dst: "/usr/sbin/secban-agent"
+    expand: true
+    file_info:
+      mode: 0755
+  - src: "${BIN_DIR}/secban-agent-configcheck"
+    dst: "/usr/bin/secban-agent-configcheck"
+    expand: true
+    file_info:
+      mode: 0755
+  - src: "${REPO_DIR}/config/agent.yaml"
+    dst: "/etc/secban/agent.yaml"
+    expand: true
+    type: "config|noreplace"
+    file_info:
+      mode: 0640
+      owner: "root"
+      group: "secban"
+  - src: "${REPO_DIR}/config/allowlist"
+    dst: "/etc/secban/allowlist"
+    expand: true
+    type: "config|noreplace"
+    file_info:
+      mode: 0640
+      owner: "root"
+      group: "secban"
+  - src: "${REPO_DIR}/config/rules.d"
+    dst: "/etc/secban/rules.d"
+    expand: true
+    type: "config|noreplace|tree"
+  - src: "${REPO_DIR}/_scripts/systemd/secban-agent.service"
+    dst: "/lib/systemd/system/secban-agent.service"
+    expand: true
+    file_info:
+      mode: 0644
+  - dst: "/var/run/secban"
+    type: dir
+    file_info:
+      mode: 0770
+      owner: "secban"
+      group: "secban"
+  - dst: "/var/lib/secban"
+    type: dir
+    file_info:
+      mode: 0770
+      owner: "secban"
+      group: "secban"
+
+overrides:
+  deb:
+    depends:
+      - nftables
+  rpm:
+    depends:
+      - nftables

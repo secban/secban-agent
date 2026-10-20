@@ -46,7 +46,7 @@ sudo ./install.sh
 ```
 
 The script performs the following steps:
-1. Creates `secban` system group and `secban-agent` system user.
+1. Creates `secban` system group and `secban` system user.
 2. Installs daemon `/usr/sbin/secban-agent`.
 3. Installs validator `/usr/bin/secban-agent-configcheck`.
 4. Creates runtime directory `/var/run/secban` and database directory `/var/lib/secban`.
@@ -143,7 +143,7 @@ The agent invokes each action with 3 positional command-line arguments:
 
 #### Execution Context
 
-- Executed as unprivileged user `secban-agent` and group `secban` (no `root` privileges).
+- Executed as unprivileged user `secban` and group `secban` (no `root` privileges).
 - Inherits systemd sandbox restrictions (`ProtectSystem=strict`, `ProtectHome=yes`, `PrivateTmp=yes`). Scripts cannot write outside permitted runtime directories.
 
 ### Allowlist (`allowlist`)

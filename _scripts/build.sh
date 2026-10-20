@@ -43,3 +43,13 @@ if [ "$TEST_INSTALL" = true ]; then
 fi
 
 (cd "$TMPDIR/$ARCH" && tar -czvf "$REPO/build/secban-agent-$GOOS-$ARCH-$VERSION.tar.gz" ./*)
+
+if [ "$GOOS" = "linux" ] && command -v nfpm >/dev/null 2>&1; then
+    export BIN_DIR="$TMPDIR/$ARCH"
+    export REPO_DIR="$REPO"
+    (
+        cd "$REPO/_scripts/package"
+        nfpm package -f nfpm.yaml -p deb -t "$REPO/build/"
+        nfpm package -f nfpm.yaml -p rpm -t "$REPO/build/"
+    )
+fi
