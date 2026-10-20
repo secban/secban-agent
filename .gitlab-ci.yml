@@ -51,6 +51,7 @@ ipset-test:
     - apt-get update && apt-get install -y ipset
     - go test -race -v -tags functional ./ban/ipset/...
   allow_failure: false
+  when: never
 nft-test:
   extends:
     - .go-cache
@@ -59,6 +60,7 @@ nft-test:
     - apt-get update && apt-get install -y nftables
     - go test -race -v -tags functional ./ban/nft/...
   allow_failure: false
+  when: never
 .build_matrix: &build_matrix
   parallel:
     matrix:
