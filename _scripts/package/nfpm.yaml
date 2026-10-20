@@ -69,7 +69,7 @@ contents:
 overrides:
   deb:
     depends:
-      - nftables
+      - "nftables | ipset"
   rpm:
     depends:
-      - nftables
+      - "(nftables or ipset)"
