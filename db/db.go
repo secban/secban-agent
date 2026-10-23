@@ -123,6 +123,11 @@ func CreateSchema(ctx context.Context, db *sql.DB) error {
 			rule TEXT NOT NULL,
 			events BLOB,
 			PRIMARY KEY(ip, ban)
+		);
+		CREATE TABLE IF NOT EXISTS semaphore (
+			id TEXT PRIMARY KEY,
+			timestamp TIMESTAMP NOT NULL,
+			data BLOB
 		);`,
 		)
 		if err == nil || !strings.Contains(err.Error(), "database is locked") {

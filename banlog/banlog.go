@@ -74,18 +74,55 @@ func Get(ctx context.Context, ip string) (*Entry, error) {
 }
 
 func GetAllFrom(ctx context.Context, from time.Time) ([]*Entry, error) {
-	database, initErr := db.DB(ctx)
-	if initErr != nil {
-		log.Error().Err(initErr).Msg(databaseConnectionErrorMessage)
-		return nil, initErr
-	}
-
-	rows, queryErr := database.QueryContext(ctx, `
+	return queryEntries(ctx, `
 		SELECT ip, rule, ban, events
 		FROM bans
 		WHERE ban >= ?
 		ORDER BY ban DESC;
 	`, from)
+}
+
+func CountSince(ctx context.Context, since time.Time) (int, error) {
+	database, dbErr := db.DB(ctx)
+	if dbErr != nil {
+		log.Error().Err(dbErr).Msg(databaseConnectionErrorMessage)
+		return 0, dbErr
+	}
+
+	row := database.QueryRowContext(ctx, `
+		SELECT COUNT(*)
+		FROM bans
+		WHERE ban > ?;
+	`, since)
+
+	var count int
+
+	scanErr := row.Scan(&count)
+	if scanErr != nil {
+		log.Error().Err(scanErr).Msg("Failed to scan ban count from database")
+		return 0, scanErr
+	}
+
+	return count, nil
+}
+
+func GetSince(ctx context.Context, since time.Time) ([]*Entry, error) {
+	return queryEntries(ctx, `
+		SELECT ip, rule, ban, events
+		FROM bans
+		WHERE ban > ?
+		ORDER BY ban ASC;
+	`, since)
+}
+
+func queryEntries(ctx context.Context, query string, args ...any) ([]*Entry, error) {
+	database, dbErr := db.DB(ctx)
+	if dbErr != nil {
+		log.Error().Err(dbErr).Msg(databaseConnectionErrorMessage)
+		return nil, dbErr
+	}
+
+	rows, queryErr := database.QueryContext(ctx, query, args...)
 	if queryErr != nil {
 		log.Error().Err(queryErr).Msg("Failed to query bans from database")
 		return nil, queryErr

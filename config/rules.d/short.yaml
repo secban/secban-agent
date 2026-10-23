@@ -1,5 +1,5 @@
 # Rules for banning IP addresses.
-not_found:
+short:
   ban_duration: "5s"
   count: 5
   max_entries: 100

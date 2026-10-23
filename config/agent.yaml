@@ -4,7 +4,7 @@
 # Path to an allow list file.
 allow_list: /etc/secban/allowlist
 # Allow local addresses 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7
-allow_local: true
+allow_local: false
 # Allow loopback addresses. 127.0.0.0/8, ::1. You probably should never disable this.
 allow_loopback: true
 ban_method: nft
@@ -18,8 +18,9 @@ log_level: "info"
 rules_default:
   ban_duration: "10m"
   count: 5
-  max_entries: 1000
+  max_entries: 100
   registry_ttl: "10m"
   sockets: []
   # sockets:
   #   - /var/run/secban/mailer.sock # secban-mailer socket
+  #   - /var/run/secban/repeater.sock # secban-repeater socket
