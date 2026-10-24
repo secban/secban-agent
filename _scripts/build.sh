@@ -8,12 +8,13 @@ REPO=$(git rev-parse --show-toplevel)
 rm -rf build
 mkdir -p build
 
-BUILD_OPTIONS="-buildvcs=false -trimpath"
-LDFLAGS="-ldflags=-w -s"
-
 export GOOS="$1"
 export ARCH="$2"
 export VERSION="$3"
+
+BUILD_OPTIONS="-buildvcs=false -trimpath"
+LDFLAGS="-ldflags=-w -s"
+LDFLAGS="$LDFLAGS -X gitlab.com/secban/secban-agent/version.Version=$VERSION"
 
 if [ -z "$GOOS" ] || [ -z "$ARCH" ] || [ -z "$VERSION" ]; then
     echo "Usage: $0 <GOOS> <ARCH> <VERSION>"

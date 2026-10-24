@@ -1,3 +1,5 @@
+//go:build !release
+
 package main
 
 import (
@@ -20,6 +22,7 @@ import (
 	"gitlab.com/secban/secban-agent/dispatcher"
 	"gitlab.com/secban/secban-agent/ip"
 	"gitlab.com/secban/secban-agent/router"
+	"gitlab.com/secban/secban-agent/version"
 )
 
 const (
@@ -32,6 +35,8 @@ const (
 )
 
 func main() {
+	version.CLI()
+
 	conf := loadConf()
 
 	zerolog.SetGlobalLevel(conf.LogLevel)

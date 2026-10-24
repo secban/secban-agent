@@ -9,9 +9,12 @@ import (
 	"gitlab.com/secban/secban-agent/config"
 	"gitlab.com/secban/secban-agent/dispatcher"
 	"gitlab.com/secban/secban-agent/ip"
+	"gitlab.com/secban/secban-agent/version"
 )
 
 func main() {
+	version.CLI()
+
 	var configDir string
 
 	flag.StringVar(&configDir, "config", "/etc/secban", "path to config directory")

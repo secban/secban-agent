@@ -19,7 +19,7 @@ import (
 	"gitlab.com/secban/secban-agent/dispatcher"
 	"gitlab.com/secban/secban-agent/ip"
 	"gitlab.com/secban/secban-agent/timeout"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const (
