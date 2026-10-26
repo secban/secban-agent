@@ -1,4 +1,4 @@
-//nolint:gochecknoglobals,forbidigo,revive // To be used in CLI.
+//nolint:gochecknoglobals,forbidigo // To be used in CLI.
 package version
 
 import (
