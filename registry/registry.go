@@ -58,7 +58,7 @@ func (r *Registry) Add(
 		}
 	}
 
-	foundOffender.Count++
+	foundOffender.ReportCount++
 	foundOffender.Timestamp = time.Now()
 
 	newEntry := entry.Entry{
@@ -84,6 +84,25 @@ func (r *Registry) Get(ip string) (offender.Offender, bool) {
 	o, exists := r.offenders[ip]
 
 	return o, exists
+}
+
+func (r *Registry) IncrementBan(ip string) offender.Offender {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
+	foundOffender, exists := r.offenders[ip]
+	if !exists {
+		foundOffender = offender.Offender{
+			IP:        ip,
+			Timestamp: time.Now(),
+			Entries:   []entry.Entry{},
+		}
+	}
+
+	foundOffender.BanCount++
+	r.offenders[ip] = foundOffender
+
+	return foundOffender
 }
 
 func (r *Registry) PruneExpired() int {

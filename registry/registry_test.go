@@ -71,8 +71,8 @@ func TestRegistryMultipleEntriesPerOffender(t *testing.T) {
 
 	for i := 1; i <= 5; i++ {
 		offender := reg.Add("10.0.0.2", "bad", "msg "+strconv.Itoa(i))
-		if offender.Count != i {
-			t.Fatalf("expected count %d, got %d", i, offender.Count)
+		if offender.ReportCount != i {
+			t.Fatalf("expected count %d, got %d", i, offender.ReportCount)
 		}
 	}
 }
@@ -86,8 +86,8 @@ func TestRegistryOffenderEntriesCapped(t *testing.T) {
 	for count := 1; count <= 30; count++ {
 		offender := reg.Add("10.0.0.3", "bad", "msg "+strconv.Itoa(count))
 		if count == 30 {
-			if offender.Count != 30 {
-				t.Fatalf("expected count 30, got %d", offender.Count)
+			if offender.ReportCount != 30 {
+				t.Fatalf("expected count 30, got %d", offender.ReportCount)
 			}
 
 			if len(offender.Entries) != 20 {

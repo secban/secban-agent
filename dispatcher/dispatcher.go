@@ -24,7 +24,7 @@ var ErrNotInitialized = errors.New("dispatcher not initialized")
 type Entry struct {
 	registry *registry.Registry
 	debounce *debounceTracker
-	timeout  string
+	timeouts []string
 	actions  []string
 	sockets  []string
 	count    int
@@ -38,8 +38,8 @@ type Dispatcher struct {
 
 type RuleConfig struct {
 	Name       string
-	Timeout    string
 	TTL        string
+	Timeouts   []string
 	Actions    []string
 	Sockets    []string
 	Count      int
@@ -87,7 +87,7 @@ func New(rules []RuleConfig, banActor ban.Actor, withBanLog bool) (*Dispatcher, 
 			registry: registry.New(ttl, rule.MaxEntries),
 			debounce: newDebounceTracker(),
 			count:    rule.Count,
-			timeout:  rule.Timeout,
+			timeouts: rule.Timeouts,
 			actions:  rule.Actions,
 			sockets:  rule.Sockets,
 		}
@@ -117,11 +117,11 @@ func (d *Dispatcher) Report(ctx context.Context, address string, rule string, me
 	log.Debug().
 		Str("ip", address).
 		Str("rule", rule).
-		Int("count", o.Count).
+		Int("report_count", o.ReportCount).
 		Int("threshold", entry.count).
 		Msg("offender reported")
 
-	if o.Count >= entry.count {
+	if o.ReportCount >= entry.count {
 		return d.Act(ctx, address, rule, message)
 	}
 
@@ -135,7 +135,7 @@ func (d *Dispatcher) Get(_ context.Context, address string) (*offender.Offender,
 
 	for _, entry := range d.matches {
 		o, exists := entry.registry.Get(address)
-		if exists && o.Count > 0 {
+		if exists && o.ReportCount > 0 {
 			return &o, nil
 		}
 	}
@@ -164,14 +164,18 @@ func (d *Dispatcher) Act(ctx context.Context, address string, rule string, messa
 		o = entry.registry.Add(address, rule, message)
 	}
 
+	timeoutValue := pickTimeout(entry.timeouts, o.BanCount)
+	o = entry.registry.IncrementBan(address)
+
 	log.Info().
 		Str("ip", address).
 		Str("rule", rule).
-		Str("timeout", entry.timeout).
-		Int("count", o.Count).
+		Str("timeout", timeoutValue).
+		Int("report_count", o.ReportCount).
+		Int("ban_count", o.BanCount).
 		Msg("triggering ban action")
 
-	banErr := d.banActor.Block(ctx, address, entry.timeout)
+	banErr := d.banActor.Block(ctx, address, timeoutValue)
 	if banErr != nil {
 		return false, banErr
 	}
@@ -183,6 +187,22 @@ func (d *Dispatcher) Act(ctx context.Context, address string, rule string, messa
 	d.triggerActions(ctx, entry, address, rule, o)
 
 	return false, nil
+}
+
+func pickTimeout(timeouts []string, banCount int) string {
+	if len(timeouts) == 0 {
+		return ""
+	}
+
+	if banCount < 0 {
+		return timeouts[0]
+	}
+
+	if banCount >= len(timeouts) {
+		return timeouts[len(timeouts)-1]
+	}
+
+	return timeouts[banCount]
 }
 
 func (d *Dispatcher) Init(ctx context.Context) error {

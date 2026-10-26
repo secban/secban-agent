@@ -6,26 +6,25 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	_ "modernc.org/sqlite" // SQLite driver.
 )
 
 type LogEntry struct {
-	IP     string
-	Ban    time.Time
-	Events string
+	BanTime  time.Time
+	IP       string
+	Events   string
+	BanCount int
 }
 
 const (
-	dbOptions           = "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&synchronous(normal)&optimize"
-	maxOpenConns        = 1
-	maxIdleConns        = 1
-	connMaxLifetime     = 0
-	dirMode             = 0o770
-	dbFileMode          = 0o660
-	createSchemaRetries = 3
+	dbOptions       = "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&synchronous(normal)&optimize"
+	maxOpenConns    = 1
+	maxIdleConns    = 1
+	connMaxLifetime = 0
+	dirMode         = 0o770
+	dbFileMode      = 0o660
 )
 
 var database *sql.DB //nolint:gochecknoglobals
@@ -53,7 +52,7 @@ func New(_ context.Context, dbPath string) (*sql.DB, error) {
 		}
 	}
 
-	db, openErr := sql.Open(
+	dbInstance, openErr := sql.Open(
 		"sqlite",
 		"file:"+dbPath+dbOptions,
 	)
@@ -61,11 +60,11 @@ func New(_ context.Context, dbPath string) (*sql.DB, error) {
 		return nil, openErr
 	}
 
-	db.SetMaxOpenConns(maxOpenConns)
-	db.SetConnMaxLifetime(connMaxLifetime)
-	db.SetMaxIdleConns(maxIdleConns)
+	dbInstance.SetMaxOpenConns(maxOpenConns)
+	dbInstance.SetConnMaxLifetime(connMaxLifetime)
+	dbInstance.SetMaxIdleConns(maxIdleConns)
 
-	return db, nil
+	return dbInstance, nil
 }
 
 func createDB(dbPath string) error {
@@ -109,33 +108,21 @@ func Close() error {
 	return err
 }
 
-func CloseDB(db *sql.DB) error {
-	return db.Close()
+func CloseDB(dbInstance *sql.DB) error {
+	return dbInstance.Close()
 }
 
-func CreateSchema(ctx context.Context, db *sql.DB) error {
-	var err error
-	for attempt := range createSchemaRetries {
-		_, err = db.ExecContext(ctx, `
+func CreateSchema(ctx context.Context, dbInstance *sql.DB) error {
+	_, createErr := dbInstance.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS bans (
 			ip TEXT,
-			ban TIMESTAMP NOT NULL,
+			ban_time TIMESTAMP NOT NULL,
+			ban_count INTEGER NOT NULL,
 			rule TEXT NOT NULL,
 			events BLOB,
-			PRIMARY KEY(ip, ban)
-		);
-		CREATE TABLE IF NOT EXISTS semaphore (
-			id TEXT PRIMARY KEY,
-			timestamp TIMESTAMP NOT NULL,
-			data BLOB
+			PRIMARY KEY(ip, ban_time)
 		);`,
-		)
-		if err == nil || !strings.Contains(err.Error(), "database is locked") {
-			return err
-		}
+	)
 
-		time.Sleep(time.Duration(attempt+1) * 100 * time.Millisecond)
-	}
-
-	return err
+	return createErr
 }

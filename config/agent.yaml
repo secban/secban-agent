@@ -16,7 +16,8 @@ listen_unix: /var/run/secban/agent.sock
 log_level: "info"
 # Default for all rules.
 rules_default:
-  ban_duration: "10m"
+  ban_duration:
+    - "10m"
   count: 5
   max_entries: 100
   registry_ttl: "10m"

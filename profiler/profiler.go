@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	_ "net/http/pprof"
+	_ "net/http/pprof" //nolint:gosec // Profiling endpoint enabled intentionally when requested.
 
 	"github.com/rs/zerolog/log"
 )

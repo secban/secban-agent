@@ -44,9 +44,9 @@ func TestExecuteCustomActionRunsAllConfiguredActions(t *testing.T) {
 		Rule:    "bad",
 		Actions: []string{firstScript, secondScript},
 		Offender: offender.Offender{
-			IP:      "192.0.2.100",
-			Entries: nil,
-			Count:   1,
+			IP:          "192.0.2.100",
+			Entries:     nil,
+			ReportCount: 1,
 		},
 	}
 
@@ -86,9 +86,9 @@ func TestExecuteCustomActionCancelsWhenPastTimeout(t *testing.T) {
 		Rule:    "bad",
 		Actions: []string{scriptPath},
 		Offender: offender.Offender{
-			IP:      "192.0.2.101",
-			Entries: nil,
-			Count:   1,
+			IP:          "192.0.2.101",
+			Entries:     nil,
+			ReportCount: 1,
 		},
 	}
 

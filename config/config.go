@@ -29,7 +29,7 @@ const (
 )
 
 type Rule struct {
-	BanDuration string   `yaml:"ban_duration"`
+	BanDuration []string `yaml:"ban_duration"`
 	RegistryTTL string   `yaml:"registry_ttl"`
 	Actions     []string `yaml:"actions"`
 	Sockets     []string `yaml:"sockets"`
@@ -38,7 +38,7 @@ type Rule struct {
 }
 
 type RulesDefault struct {
-	BanDuration string   `yaml:"ban_duration"`
+	BanDuration []string `yaml:"ban_duration"`
 	RegistryTTL string   `yaml:"registry_ttl"`
 	Actions     []string `yaml:"actions"`
 	Sockets     []string `yaml:"sockets"`
@@ -276,7 +276,7 @@ func transformRule(
 		return dispatcher.RuleConfig{}, fmt.Errorf("rule %s: %w", name, countErr)
 	}
 
-	banDuration, timeoutErr := resolveDuration(rule.BanDuration, rulesDefaultConfig.BanDuration)
+	banDurations, timeoutErr := resolveDurations(rule.BanDuration, rulesDefaultConfig.BanDuration)
 	if timeoutErr != nil {
 		return dispatcher.RuleConfig{}, fmt.Errorf(
 			"rule %s: invalid ban duration: %w",
@@ -302,7 +302,7 @@ func transformRule(
 	return dispatcher.RuleConfig{
 		Name:       name,
 		Count:      count,
-		Timeout:    banDuration,
+		Timeouts:   banDurations,
 		TTL:        ttl,
 		MaxEntries: maxEntries,
 		Actions:    resolveActions(rule.Actions, rulesDefaultConfig.Actions),
@@ -404,4 +404,22 @@ func resolveDuration(duration string, defaultDuration string) (string, error) {
 	}
 
 	return duration, nil
+}
+
+func resolveDurations(durations []string, defaultDurations []string) ([]string, error) {
+	if len(durations) == 0 {
+		durations = defaultDurations
+	}
+
+	if len(durations) == 0 {
+		return nil, errors.New("ban duration must be specified")
+	}
+
+	for _, d := range durations {
+		if !timeout.IsValid(d) {
+			return nil, fmt.Errorf("invalid duration %q", d)
+		}
+	}
+
+	return durations, nil
 }

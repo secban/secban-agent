@@ -13,17 +13,19 @@ import (
 const databaseConnectionErrorMessage = "Failed to get database connection"
 
 type Entry struct {
-	IP     string
-	Rule   string
-	Ban    time.Time
-	Events string
+	BanTime  time.Time
+	IP       string
+	Rule     string
+	Events   string
+	BanCount int
 }
 
 func Log(ctx context.Context, rule string, o offender.Offender) {
 	log.Debug().
 		Str("ip", o.IP).
 		Str("rule", rule).
-		Time("ban", o.Timestamp).
+		Time("ban_time", o.Timestamp).
+		Int("ban_count", o.BanCount).
 		Msg("Logging ban for offender")
 
 	marshalled, marshallErr := json.Marshal(o)
@@ -39,9 +41,9 @@ func Log(ctx context.Context, rule string, o offender.Offender) {
 	}
 
 	r, err := database.ExecContext(ctx, `
-		INSERT OR REPLACE INTO bans (ip, rule, ban, events)
-		VALUES (?, ?, ?, ?);
-	`, o.IP, rule, o.Timestamp, string(marshalled))
+		INSERT OR REPLACE INTO bans (ip, rule, ban_time, ban_count, events)
+		VALUES (?, ?, ?, ?, ?);
+	`, o.IP, rule, o.Timestamp, o.BanCount, string(marshalled))
 	if err != nil {
 		log.Error().Interface("result", r).Err(err).Msg("Failed to insert ban into database")
 	}
@@ -55,16 +57,16 @@ func Get(ctx context.Context, ip string) (*Entry, error) {
 	}
 
 	row := database.QueryRowContext(ctx, `
-		SELECT ip, rule, ban, events
+		SELECT ip, rule, ban_time, ban_count, events
 		FROM bans
 		WHERE ip = ?
-		ORDER BY ban DESC
+		ORDER BY ban_time DESC
 		LIMIT 1;
 	`, ip)
 
 	var entry Entry
 
-	scanErr := row.Scan(&entry.IP, &entry.Rule, &entry.Ban, &entry.Events)
+	scanErr := row.Scan(&entry.IP, &entry.Rule, &entry.BanTime, &entry.BanCount, &entry.Events)
 	if scanErr != nil {
 		log.Error().Err(scanErr).Msg("Failed to scan ban entry from database")
 		return nil, scanErr
@@ -75,10 +77,10 @@ func Get(ctx context.Context, ip string) (*Entry, error) {
 
 func GetAllFrom(ctx context.Context, from time.Time) ([]*Entry, error) {
 	return queryEntries(ctx, `
-		SELECT ip, rule, ban, events
+		SELECT ip, rule, ban_time, ban_count, events
 		FROM bans
-		WHERE ban >= ?
-		ORDER BY ban DESC;
+		WHERE ban_time >= ?
+		ORDER BY ban_time DESC;
 	`, from)
 }
 
@@ -92,7 +94,7 @@ func CountSince(ctx context.Context, since time.Time) (int, error) {
 	row := database.QueryRowContext(ctx, `
 		SELECT COUNT(*)
 		FROM bans
-		WHERE ban > ?;
+		WHERE ban_time > ?;
 	`, since)
 
 	var count int
@@ -108,10 +110,10 @@ func CountSince(ctx context.Context, since time.Time) (int, error) {
 
 func GetSince(ctx context.Context, since time.Time) ([]*Entry, error) {
 	return queryEntries(ctx, `
-		SELECT ip, rule, ban, events
+		SELECT ip, rule, ban_time, ban_count, events
 		FROM bans
-		WHERE ban > ?
-		ORDER BY ban ASC;
+		WHERE ban_time > ?
+		ORDER BY ban_time ASC;
 	`, since)
 }
 
@@ -134,7 +136,7 @@ func queryEntries(ctx context.Context, query string, args ...any) ([]*Entry, err
 	for rows.Next() {
 		var entry Entry
 
-		scanErr := rows.Scan(&entry.IP, &entry.Rule, &entry.Ban, &entry.Events)
+		scanErr := rows.Scan(&entry.IP, &entry.Rule, &entry.BanTime, &entry.BanCount, &entry.Events)
 		if scanErr != nil {
 			log.Error().Err(scanErr).Msg("Failed to scan ban entry from database")
 			return nil, scanErr

@@ -19,7 +19,8 @@ log_level: debug
 rules_default:
   actions:
     - /tmp/default.sh
-  ban_duration: 5m
+  ban_duration:
+    - 5m
   count: 1
   max_entries: 10
   registry_ttl: 10m
@@ -30,7 +31,8 @@ bad:
   actions:
     - /tmp/first.sh
     - /tmp/second.sh
-  ban_duration: 5m
+  ban_duration:
+    - 5m
   count: 1
   max_entries: 10
   registry_ttl: 10m
@@ -51,7 +53,7 @@ func TestLoadConfigAcceptsStrictPermissions(t *testing.T) {
 	databasePath := filepath.Join(dir, "agent.sqlite")
 	listenUnix := filepath.Join(dir, "agent.sock")
 
-	agentConfig := "database: " + databasePath + "\nlisten_unix: " + listenUnix + "\nban_method: dummy\nrules_default:\n  count: 1\n  ban_duration: 5m\n  registry_ttl: 10m\n  max_entries: 10\n"
+	agentConfig := "database: " + databasePath + "\nlisten_unix: " + listenUnix + "\nban_method: dummy\nrules_default:\n  count: 1\n  ban_duration:\n    - 5m\n  registry_ttl: 10m\n  max_entries: 10\n"
 
 	writeErr := os.WriteFile(filepath.Join(dir, "agent.yaml"), []byte(agentConfig), 0o600)
 	if writeErr != nil {
@@ -63,7 +65,7 @@ func TestLoadConfigAcceptsStrictPermissions(t *testing.T) {
 		t.Fatalf("create rules dir: %v", writeErr)
 	}
 
-	ruleConfig := "ssh:\n  count: 2\n  ban_duration: 10m\n  registry_ttl: 10m\n  max_entries: 10\n"
+	ruleConfig := "ssh:\n  count: 2\n  ban_duration:\n    - 10m\n  registry_ttl: 10m\n  max_entries: 10\n"
 
 	writeErr = os.WriteFile(filepath.Join(dir, "rules.d", "ssh.yaml"), []byte(ruleConfig), 0o600)
 	if writeErr != nil {

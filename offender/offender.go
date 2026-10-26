@@ -8,10 +8,11 @@ import (
 )
 
 type Offender struct {
-	IP        string        `json:"ip"`
-	Timestamp time.Time     `json:"timestamp"`
-	Entries   []entry.Entry `json:"entries"`
-	Count     int           `json:"count"`
+	IP          string        `json:"ip"`
+	Timestamp   time.Time     `json:"timestamp"`
+	Entries     []entry.Entry `json:"entries"`
+	ReportCount int           `json:"report_count"`
+	BanCount    int           `json:"ban_count"`
 }
 
 func (o Offender) String() string {

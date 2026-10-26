@@ -66,7 +66,7 @@ func TestDispatcherReportTriggersBlockAtThreshold(t *testing.T) {
 	dispatcherInstance, newErr := dispatcher.New([]dispatcher.RuleConfig{{
 		Name:       "bad",
 		Count:      2,
-		Timeout:    "30m",
+		Timeouts:   []string{"30m"},
 		TTL:        "1h",
 		MaxEntries: 10,
 	}}, actor, false)
@@ -117,7 +117,7 @@ func TestDispatcherGetReturnsRecordedOffender(t *testing.T) {
 	dispatcherInstance, newErr := dispatcher.New([]dispatcher.RuleConfig{{
 		Name:       "bad",
 		Count:      1,
-		Timeout:    "5m",
+		Timeouts:   []string{"5m"},
 		TTL:        "10m",
 		MaxEntries: 10,
 	}}, actor, false)
@@ -143,8 +143,8 @@ func TestDispatcherGetReturnsRecordedOffender(t *testing.T) {
 		t.Fatalf("wrong offender IP: got %q", offender.IP)
 	}
 
-	if offender.Count != 1 {
-		t.Fatalf("count mismatch: got %d want 1", offender.Count)
+	if offender.ReportCount != 1 {
+		t.Fatalf("count mismatch: got %d want 1", offender.ReportCount)
 	}
 }
 
@@ -156,7 +156,7 @@ func TestDispatcherRejectsUnknownRule(t *testing.T) {
 	dispatcherInstance, newErr := dispatcher.New([]dispatcher.RuleConfig{{
 		Name:       "bad",
 		Count:      1,
-		Timeout:    "5m",
+		Timeouts:   []string{"5m"},
 		TTL:        "10m",
 		MaxEntries: 10,
 	}}, actor, false)
@@ -178,7 +178,7 @@ func TestDispatcherInitAndExit(t *testing.T) {
 	dispatcherInstance, newErr := dispatcher.New([]dispatcher.RuleConfig{{
 		Name:       "bad",
 		Count:      1,
-		Timeout:    "5m",
+		Timeouts:   []string{"5m"},
 		TTL:        "10m",
 		MaxEntries: 10,
 	}}, actor, false)
@@ -233,7 +233,7 @@ func TestDispatcherRunsAllActions(t *testing.T) {
 	dispatcherInstance, newErr := dispatcher.New([]dispatcher.RuleConfig{{
 		Name:       "bad",
 		Count:      1,
-		Timeout:    "5m",
+		Timeouts:   []string{"5m"},
 		TTL:        "10m",
 		MaxEntries: 10,
 		Actions:    []string{firstScript, secondScript},
@@ -279,11 +279,11 @@ func TestDispatcherDebouncesActionsWhileRebanning(t *testing.T) {
 	actor := &fakeBanActor{}
 
 	dispatcherInstance, newErr := dispatcher.New([]dispatcher.RuleConfig{{
-		Name:    "bad",
-		Count:   1,
-		Timeout: "5m",
-		TTL:     "10m",
-		Actions: []string{script},
+		Name:     "bad",
+		Count:    1,
+		Timeouts: []string{"5m"},
+		TTL:      "10m",
+		Actions:  []string{script},
 	}}, actor, false)
 	if newErr != nil {
 		t.Fatalf("new dispatcher: %v", newErr)
@@ -333,7 +333,7 @@ func TestDispatcherReportAllowedIP(t *testing.T) {
 	dispatcherInstance, newErr := dispatcher.New([]dispatcher.RuleConfig{{
 		Name:       "bad",
 		Count:      1,
-		Timeout:    "5m",
+		Timeouts:   []string{"5m"},
 		TTL:        "10m",
 		MaxEntries: 10,
 	}}, actor, false)
@@ -379,7 +379,7 @@ func TestDispatcherActAllowedIP(t *testing.T) {
 	dispatcherInstance, newErr := dispatcher.New([]dispatcher.RuleConfig{{
 		Name:       "bad",
 		Count:      1,
-		Timeout:    "5m",
+		Timeouts:   []string{"5m"},
 		TTL:        "10m",
 		MaxEntries: 10,
 	}}, actor, false)
@@ -409,7 +409,7 @@ func TestDispatcherReportAndActInvalidIP(t *testing.T) {
 	dispatcherInstance, newErr := dispatcher.New([]dispatcher.RuleConfig{{
 		Name:       "bad",
 		Count:      1,
-		Timeout:    "5m",
+		Timeouts:   []string{"5m"},
 		TTL:        "10m",
 		MaxEntries: 10,
 	}}, actor, false)
@@ -444,7 +444,7 @@ func TestPackageLevelReportAndBan(t *testing.T) {
 	initErr := dispatcher.Init(context.Background(), []dispatcher.RuleConfig{{
 		Name:       "bad",
 		Count:      1,
-		Timeout:    "5m",
+		Timeouts:   []string{"5m"},
 		TTL:        "10m",
 		MaxEntries: 10,
 	}}, actor, false)
@@ -491,5 +491,65 @@ func TestPackageLevelReportAndBan(t *testing.T) {
 
 	if len(actor.blocked) != 1 {
 		t.Fatalf("expected 1 block for non-allowed IP, got: %d", len(actor.blocked))
+	}
+}
+
+func TestDispatcherIncrementalBanDurations(t *testing.T) {
+	t.Parallel()
+
+	actor := &fakeBanActor{}
+
+	dispatcherInstance, newErr := dispatcher.New([]dispatcher.RuleConfig{{
+		Name:       "bad",
+		Count:      1,
+		Timeouts:   []string{"1m", "5m", "1h"},
+		TTL:        "10m",
+		MaxEntries: 10,
+	}}, actor, false)
+	if newErr != nil {
+		t.Fatalf("new dispatcher: %v", newErr)
+	}
+
+	ipAddr := "192.0.2.101"
+
+	// First ban (ban_count 0 -> timeouts[0] "1m", then ban_count becomes 1)
+	_, reportErr := dispatcherInstance.Report(context.Background(), ipAddr, "bad", "msg1")
+	if reportErr != nil {
+		t.Fatalf("first ban report: %v", reportErr)
+	}
+
+	// Second ban (ban_count 1 -> timeouts[1] "5m", then ban_count becomes 2)
+	_, reportErr = dispatcherInstance.Report(context.Background(), ipAddr, "bad", "msg2")
+	if reportErr != nil {
+		t.Fatalf("second ban report: %v", reportErr)
+	}
+
+	// Third ban (ban_count 2 -> timeouts[2] "1h", then ban_count becomes 3)
+	_, reportErr = dispatcherInstance.Report(context.Background(), ipAddr, "bad", "msg3")
+	if reportErr != nil {
+		t.Fatalf("third ban report: %v", reportErr)
+	}
+
+	// Fourth ban (ban_count 3 >= len -> timeouts[2] "1h")
+	_, reportErr = dispatcherInstance.Report(context.Background(), ipAddr, "bad", "msg4")
+	if reportErr != nil {
+		t.Fatalf("fourth ban report: %v", reportErr)
+	}
+
+	if len(actor.blocked) != 4 {
+		t.Fatalf("expected 4 blocks, got %d", len(actor.blocked))
+	}
+
+	expected := []string{
+		ipAddr + ":1m",
+		ipAddr + ":5m",
+		ipAddr + ":1h",
+		ipAddr + ":1h",
+	}
+
+	for i, want := range expected {
+		if actor.blocked[i] != want {
+			t.Fatalf("block[%d] = %q, want %q", i, actor.blocked[i], want)
+		}
 	}
 }

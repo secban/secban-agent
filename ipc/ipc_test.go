@@ -24,7 +24,7 @@ func TestParseMessageRoundTrip(t *testing.T) {
 				Timestamp: now,
 				Message:   "badbotia",
 			}},
-			Count: 1,
+			ReportCount: 1,
 		},
 	}
 
@@ -64,11 +64,11 @@ func assertParsedMessageMatches(t *testing.T, expected, actual ipc.Message) {
 		)
 	}
 
-	if actual.Offender.Count != expected.Offender.Count {
+	if actual.Offender.ReportCount != expected.Offender.ReportCount {
 		t.Fatalf(
-			"offender count mismatch: got %d want %d",
-			actual.Offender.Count,
-			expected.Offender.Count,
+			"offender report count mismatch: got %d want %d",
+			actual.Offender.ReportCount,
+			expected.Offender.ReportCount,
 		)
 	}
 

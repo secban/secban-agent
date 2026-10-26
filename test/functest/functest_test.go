@@ -29,14 +29,14 @@ func TestMain(m *testing.M) {
 		{
 			Name:       "ssh",
 			Count:      3,
-			Timeout:    "10m",
+			Timeouts:   []string{"10m"},
 			TTL:        "1h",
 			MaxEntries: 50,
 		},
 		{
 			Name:       "http",
 			Count:      1,
-			Timeout:    "5m",
+			Timeouts:   []string{"5m"},
 			TTL:        "30m",
 			MaxEntries: 50,
 		},
@@ -128,8 +128,8 @@ func TestFunctionalReportAndStatus(t *testing.T) {
 		t.Fatalf("expected IP %s, got: %s", targetIP, recordedOffender.IP)
 	}
 
-	if recordedOffender.Count != 1 {
-		t.Fatalf("expected count 1, got: %d", recordedOffender.Count)
+	if recordedOffender.ReportCount != 1 {
+		t.Fatalf("expected count 1, got: %d", recordedOffender.ReportCount)
 	}
 }
 
@@ -208,7 +208,7 @@ func TestFunctionalConcurrentReports(t *testing.T) {
 		t.Fatalf("decode status: %v", decodeErr)
 	}
 
-	if recordedOffender.Count != totalRequests {
-		t.Fatalf("expected %d reports recorded, got: %d", totalRequests, recordedOffender.Count)
+	if recordedOffender.ReportCount != totalRequests {
+		t.Fatalf("expected %d reports recorded, got: %d", totalRequests, recordedOffender.ReportCount)
 	}
 }

@@ -33,10 +33,12 @@ func TestBanlogCountSinceAndGetSince(t *testing.T) {
 	banlog.Log(ctx, "rule-a", offender.Offender{
 		IP:        "1.1.1.1",
 		Timestamp: timeFirst,
+		BanCount:  1,
 	})
 	banlog.Log(ctx, "rule-b", offender.Offender{
 		IP:        "2.2.2.2",
 		Timestamp: timeSecond,
+		BanCount:  2,
 	})
 
 	countAll, countAllErr := banlog.CountSince(ctx, timeStart)
@@ -68,5 +70,9 @@ func TestBanlogCountSinceAndGetSince(t *testing.T) {
 
 	if entries[0].IP != "2.2.2.2" {
 		t.Fatalf("expected IP 2.2.2.2, got %q", entries[0].IP)
+	}
+
+	if entries[0].BanCount != 2 {
+		t.Fatalf("expected BanCount 2, got %d", entries[0].BanCount)
 	}
 }
