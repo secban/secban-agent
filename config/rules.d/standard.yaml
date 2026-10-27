@@ -1,7 +1,6 @@
-# Rules for banning IP addresses.
+# Example rule for banning IP addresses.
+# It will simply inherit the default settings from the agent configuration.
 standard:
   ban_duration:
     - "10m"
-  count: 3
-  max_entries: 500
-  registry_ttl: "30m"
+    - "1h"

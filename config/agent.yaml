@@ -1,26 +1,45 @@
 # SecBan agent configuration file. #
 ####################################
 
-# Path to an allow list file.
-allow_list: /etc/secban/allowlist
-# Allow local addresses 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7
-allow_local: false
-# Allow loopback addresses. 127.0.0.0/8, ::1. You probably should never disable this.
+# Path to an allow list file. See /etc/secban/allowlist.example. Default: ""
+# allow_list: /etc/secban/allowlist
+
+# Allow local addresses 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7. Default: false
+# allow_local: false
+
+# Allow loopback addresses. 127.0.0.0/8, ::1. You probably should not disable this. Default: true
 allow_loopback: true
-ban_method: nft
-database: /var/lib/secban/agent.sqlite
-# Listen address(es) for the secban agent.
+
+# Ban method to use. Options: `nft` (for nftables) or `ipset` (for iptables, requires ipset to be installed). Default: `nft`
+# ban_method: nft
+
+# Path to the agent's database file. You can set it to an empty value,
+# if you don't want to log ban events.
+# Alternatively, set it to ":memory:" for an in-memory database. Default: /var/lib/secban/agent.sqlite
+# database: /var/lib/secban/agent.sqlite
+
+# Listen address(es) for the secban agent. You can specify both a TCP and a Unix socket.
 # listen_tcp: 127.0.0.1:1024
 listen_unix: /var/run/secban/agent.sock
-# Logging level.
+
+# Logging level. Options: `debug`, `info`, `warn`, `error`
 log_level: "info"
+
 # Default for all rules.
 rules_default:
+  # Durations for which bans are active.
+  # Example: "10m" for 10 minutes, "1h" for 1 hour, etc.
+  # Multiple durations can be specified, and repeated bans will incrementally follow these durations.
+  # Example: ["10m", "1h"] would lead to a 10 minute ban the first time, and a 1 hour ban if repeated.
   ban_duration:
     - "10m"
+  # Number of report events before a ban is applied.
   count: 5
+  # Maximum number of entries in the ban registry.
   max_entries: 100
-  registry_ttl: "10m"
+  # Time-to-live for entries in the ban registry.
+  registry_ttl: "30m"
+  # Sockets to communicate with other secban components.
   sockets: []
   # sockets:
   #   - /var/run/secban/mailer.sock # secban-mailer socket
