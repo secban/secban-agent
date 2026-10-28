@@ -21,6 +21,7 @@ import (
 	"gitlab.com/secban/secban-agent/db"
 	"gitlab.com/secban/secban-agent/dispatcher"
 	"gitlab.com/secban/secban-agent/ip"
+	"gitlab.com/secban/secban-agent/profiler"
 	"gitlab.com/secban/secban-agent/router"
 	"gitlab.com/secban/secban-agent/version"
 )
@@ -61,6 +62,12 @@ func main() {
 	if conf.ListenUnix != "" {
 		waitGroup.Go(func() {
 			listenUnix(ctx, conf.ListenUnix)
+		})
+	}
+
+	if conf.Profiler != "" {
+		waitGroup.Go(func() {
+			profiler.Listen(ctx, conf.Profiler)
 		})
 	}
 

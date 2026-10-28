@@ -18,7 +18,7 @@ const (
 	tcpIdleTimeout  = 1 * time.Second
 )
 
-func ListenProfiler(ctx context.Context, addr string) {
+func Listen(ctx context.Context, addr string) {
 	server := &http.Server{
 		Addr:         addr,
 		ReadTimeout:  tcpReadTimeout,

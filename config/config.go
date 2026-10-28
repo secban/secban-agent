@@ -4,64 +4,60 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
-	"maps"
-	"os"
 	"path"
-	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"gitlab.com/secban/secban-agent/ban"
+	"gitlab.com/secban/secban-agent/configloader"
 	"gitlab.com/secban/secban-agent/db"
 	"gitlab.com/secban/secban-agent/dispatcher"
 	"gitlab.com/secban/secban-agent/ip"
 	"gitlab.com/secban/secban-agent/timeout"
-	"go.yaml.in/yaml/v3"
 )
 
 const (
-	fileName     = "agent.yaml"
-	rulesDir     = "rules.d"
-	maxFilePerms = fs.FileMode(0o644)
+	fileName = "agent.yaml"
+	rulesDir = "rules.d"
 )
 
 type Rule struct {
-	BanDuration []string `yaml:"ban_duration"`
-	RegistryTTL string   `yaml:"registry_ttl"`
-	Actions     []string `yaml:"actions"`
-	Sockets     []string `yaml:"sockets"`
-	Count       int      `yaml:"count"`
-	MaxEntries  int      `yaml:"max_entries"`
+	BanDuration []string `koanf:"ban_duration"`
+	RegistryTTL string   `koanf:"registry_ttl"`
+	Actions     []string `koanf:"actions"`
+	Sockets     []string `koanf:"sockets"`
+	Count       int      `koanf:"count"`
+	MaxEntries  int      `koanf:"max_entries"`
 }
 
 type RulesDefault struct {
-	BanDuration []string `yaml:"ban_duration"`
-	RegistryTTL string   `yaml:"registry_ttl"`
-	Actions     []string `yaml:"actions"`
-	Sockets     []string `yaml:"sockets"`
-	Count       int      `yaml:"count"`
-	MaxEntries  int      `yaml:"max_entries"`
+	BanDuration []string `koanf:"ban_duration"`
+	RegistryTTL string   `koanf:"registry_ttl"`
+	Actions     []string `koanf:"actions"`
+	Sockets     []string `koanf:"sockets"`
+	Count       int      `koanf:"count"`
+	MaxEntries  int      `koanf:"max_entries"`
 }
 
 type ParsedConfig struct {
-	LogLevel      string       `yaml:"log_level"`
-	AllowList     string       `yaml:"allow_list"`
-	ListenTCP     string       `yaml:"listen_tcp"`
-	ListenUnix    string       `yaml:"listen_unix"`
-	BanMethod     string       `yaml:"ban_method"`
-	Database      string       `yaml:"database"`
-	RulesDefault  RulesDefault `yaml:"rules_default"`
-	AllowLocal    bool         `yaml:"allow_local"`
-	AllowLoopback bool         `yaml:"allow_loopback"`
+	Rules         map[string]Rule `koanf:"rules"`
+	LogLevel      string          `koanf:"log_level"`
+	AllowList     string          `koanf:"allow_list"`
+	ListenTCP     string          `koanf:"listen_tcp"`
+	ListenUnix    string          `koanf:"listen_unix"`
+	Profiler      string          `koanf:"profiler"`
+	BanMethod     string          `koanf:"ban_method"`
+	Database      string          `koanf:"database"`
+	RulesDefault  RulesDefault    `koanf:"rules_default"`
+	AllowLocal    bool            `koanf:"allow_local"`
+	AllowLoopback bool            `koanf:"allow_loopback"`
 }
 
 type Config struct {
 	AllowList     string
 	ListenTCP     string
 	ListenUnix    string
+	Profiler      string
 	BanMethod     string
 	Database      string
 	Rules         []dispatcher.RuleConfig
@@ -87,6 +83,7 @@ func LoadConfig(configDir string) (*Config, error) {
 
 	config.ListenUnix = parsed.ListenUnix
 	config.ListenTCP = parsed.ListenTCP
+	config.Profiler = parsed.Profiler
 
 	logLevel, logLevelErr := parseLogLevel(parsed.LogLevel)
 	if logLevelErr != nil {
@@ -116,9 +113,9 @@ func LoadConfig(configDir string) (*Config, error) {
 
 	config.Database = database
 
-	rules, loadRulesErr := loadRules(configDir, parsed.RulesDefault)
-	if loadRulesErr != nil {
-		return nil, loadRulesErr
+	rules, transformErr := transformRules(parsed.Rules, parsed.RulesDefault)
+	if transformErr != nil {
+		return nil, transformErr
 	}
 
 	config.Rules = rules
@@ -128,41 +125,14 @@ func LoadConfig(configDir string) (*Config, error) {
 
 func parseConfig(configDir string) (*ParsedConfig, error) {
 	mainConfigPath := path.Join(configDir, fileName)
+	rulesPath := path.Join(configDir, rulesDir)
 
-	checkYAMLPermissions(mainConfigPath)
-
-	var parsed ParsedConfig
-
-	configData, readErr := os.ReadFile(mainConfigPath)
-	if readErr != nil {
-		return nil, readErr
-	}
-
-	decodeErr := yaml.Unmarshal(configData, &parsed)
-	if decodeErr != nil {
-		return nil, decodeErr
+	parsed, parseErr := configloader.ParseConfig(defaultParsedConfig(), mainConfigPath, []string{rulesPath})
+	if parseErr != nil {
+		return nil, parseErr
 	}
 
 	return &parsed, nil
-}
-
-func checkYAMLPermissions(filePath string) {
-	fileInfo, statErr := os.Stat(filePath)
-	if statErr != nil {
-		log.Fatal().
-			Str("file", filePath).
-			Err(statErr).
-			Msg("failed to stat yaml configuration file")
-	}
-
-	mode := fileInfo.Mode().Perm()
-	if mode > maxFilePerms || mode&^maxFilePerms != 0 {
-		log.Fatal().
-			Str("file", filePath).
-			Str("permissions", fmt.Sprintf("%#o", mode)).
-			Str("max_expected", fmt.Sprintf("%#o", maxFilePerms)).
-			Msg("invalid permissions for yaml configuration file: expected 0644 or lower")
-	}
 }
 
 func parseLogLevel(logLevel string) (zerolog.Level, error) {
@@ -220,32 +190,6 @@ func parseAllowList(allowList string) (string, error) {
 	}
 
 	return allowList, nil
-}
-
-func loadRules(configDir string, rulesDefault RulesDefault) ([]dispatcher.RuleConfig, error) {
-	rulesMap, loadRulesErr := parseRules(configDir)
-	if loadRulesErr != nil {
-		return nil, loadRulesErr
-	}
-
-	transformedRules, transformRulesErr := transformRules(
-		rulesMap,
-		rulesDefault,
-	)
-	if transformRulesErr != nil {
-		return nil, transformRulesErr
-	}
-
-	return transformedRules, nil
-}
-
-func parseRules(configDir string) (map[string]Rule, error) {
-	dirRules, readDirErr := readYAMLDir[Rule](filepath.Join(configDir, rulesDir))
-	if readDirErr != nil {
-		return nil, readDirErr
-	}
-
-	return dirRules, nil
 }
 
 func transformRules(
@@ -348,50 +292,6 @@ func resolveSockets(sockets []string, defaultSockets []string) []string {
 	}
 
 	return sockets
-}
-
-func readYAMLDir[T any](dirPath string) (map[string]T, error) {
-	result := make(map[string]T)
-
-	entries, readDirErr := os.ReadDir(dirPath)
-	if readDirErr != nil {
-		if os.IsNotExist(readDirErr) {
-			return result, nil
-		}
-
-		return nil, readDirErr
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-
-		name := entry.Name()
-		if !strings.HasSuffix(name, ".yaml") && !strings.HasSuffix(name, ".yml") {
-			continue
-		}
-
-		filePath := filepath.Join(dirPath, name)
-
-		checkYAMLPermissions(filePath)
-
-		data, readFileErr := os.ReadFile(filePath)
-		if readFileErr != nil {
-			return nil, readFileErr
-		}
-
-		var items map[string]T
-
-		unmarshalErr := yaml.Unmarshal(data, &items)
-		if unmarshalErr != nil {
-			return nil, fmt.Errorf("failed to parse %s: %w", filePath, unmarshalErr)
-		}
-
-		maps.Copy(result, items)
-	}
-
-	return result, nil
 }
 
 func resolveDuration(duration string, defaultDuration string) (string, error) {
