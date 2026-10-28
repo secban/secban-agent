@@ -12,6 +12,7 @@ import (
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -64,8 +65,21 @@ func ParseConfig[T any](defaultConfig T, filePath string, scanDirs []string) (T,
 	return result, nil
 }
 
+func TransformLogLevel(logLevel string) (zerolog.Level, error) {
+	if logLevel == "" {
+		logLevel = "info"
+	}
+
+	parsedLevel, err := zerolog.ParseLevel(logLevel)
+	if err != nil {
+		return zerolog.Disabled, err
+	}
+
+	return parsedLevel, nil
+}
+
 func loadConfigFile(instance *koanf.Koanf, filePath string) error {
-	checkErr := CheckYAMLPermissions(filePath)
+	checkErr := checkYAMLPermissions(filePath)
 	if checkErr != nil {
 		return checkErr
 	}
@@ -117,7 +131,7 @@ func isYAMLFile(entry os.DirEntry) bool {
 }
 
 func loadAndMergeDirEntry(instance *koanf.Koanf, entryPath string, subKey string) error {
-	checkErr := CheckYAMLPermissions(entryPath)
+	checkErr := checkYAMLPermissions(entryPath)
 	if checkErr != nil {
 		return checkErr
 	}
@@ -144,7 +158,7 @@ func deriveSubKey(dirPath string) string {
 	return clean
 }
 
-func CheckYAMLPermissions(filePath string) error {
+func checkYAMLPermissions(filePath string) error {
 	fileInfo, statErr := os.Stat(filePath)
 	if statErr != nil {
 		log.Error().

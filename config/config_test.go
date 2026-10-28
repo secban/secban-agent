@@ -113,7 +113,7 @@ func writeRuleFile(t *testing.T, dir string, name string, ruleYAML string) {
 	}
 }
 
-func assertRuleActions(t *testing.T, cfg *config.Config, want []string) {
+func assertRuleActions(t *testing.T, cfg config.Config, want []string) {
 	t.Helper()
 
 	if len(cfg.Rules) != 1 {

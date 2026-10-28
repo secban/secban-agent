@@ -66,89 +66,76 @@ type Config struct {
 	AllowLoopback bool
 }
 
-func LoadConfig(configDir string) (*Config, error) {
-	parsed, parseErr := parseConfig(configDir)
+func LoadConfig(configDir string) (Config, error) {
+	mainConfigPath := path.Join(configDir, fileName)
+	rulesPath := path.Join(configDir, rulesDir)
+
+	parsed, parseErr := configloader.ParseConfig(defaultParsedConfig(), mainConfigPath, []string{rulesPath})
 	if parseErr != nil {
-		return nil, parseErr
+		return Config{}, parseErr
 	}
 
+	transformed, transformErr := transformConfig(parsed)
+	if transformErr != nil {
+		return Config{}, transformErr
+	}
+
+	return transformed, nil
+}
+
+func transformConfig(parsed ParsedConfig) (Config, error) {
 	config := Config{
 		AllowLocal:    parsed.AllowLocal,
 		AllowLoopback: parsed.AllowLoopback,
 	}
 
 	if parsed.ListenTCP == "" && parsed.ListenUnix == "" {
-		return nil, errors.New("at least one of listen_tcp or listen_unix must be specified")
+		return Config{}, errors.New("at least one of listen_tcp or listen_unix must be specified")
 	}
 
 	config.ListenUnix = parsed.ListenUnix
 	config.ListenTCP = parsed.ListenTCP
 	config.Profiler = parsed.Profiler
 
-	logLevel, logLevelErr := parseLogLevel(parsed.LogLevel)
+	logLevel, logLevelErr := configloader.TransformLogLevel(parsed.LogLevel)
 	if logLevelErr != nil {
-		return nil, logLevelErr
+		return Config{}, logLevelErr
 	}
 
 	config.LogLevel = logLevel
 
-	banMethod, banMethodErr := parseBanMethod(parsed.BanMethod)
+	banMethod, banMethodErr := transformBanMethod(parsed.BanMethod)
 	if banMethodErr != nil {
-		return nil, banMethodErr
+		return Config{}, banMethodErr
 	}
 
 	config.BanMethod = banMethod
 
-	allowList, allowListErr := parseAllowList(parsed.AllowList)
+	allowList, allowListErr := transformAllowList(parsed.AllowList)
 	if allowListErr != nil {
-		return nil, allowListErr
+		return Config{}, allowListErr
 	}
 
 	config.AllowList = allowList
 
-	database, databaseErr := parseDatabase(parsed.Database)
+	database, databaseErr := transformDatabase(parsed.Database)
 	if databaseErr != nil {
-		return nil, databaseErr
+		return Config{}, databaseErr
 	}
 
 	config.Database = database
 
 	rules, transformErr := transformRules(parsed.Rules, parsed.RulesDefault)
 	if transformErr != nil {
-		return nil, transformErr
+		return Config{}, transformErr
 	}
 
 	config.Rules = rules
 
-	return &config, nil
+	return config, nil
 }
 
-func parseConfig(configDir string) (*ParsedConfig, error) {
-	mainConfigPath := path.Join(configDir, fileName)
-	rulesPath := path.Join(configDir, rulesDir)
-
-	parsed, parseErr := configloader.ParseConfig(defaultParsedConfig(), mainConfigPath, []string{rulesPath})
-	if parseErr != nil {
-		return nil, parseErr
-	}
-
-	return &parsed, nil
-}
-
-func parseLogLevel(logLevel string) (zerolog.Level, error) {
-	if logLevel == "" {
-		logLevel = "info"
-	}
-
-	parsedLevel, err := zerolog.ParseLevel(logLevel)
-	if err != nil {
-		return zerolog.Disabled, err
-	}
-
-	return parsedLevel, nil
-}
-
-func parseBanMethod(banMethod string) (string, error) {
+func transformBanMethod(banMethod string) (string, error) {
 	if !slices.Contains(ban.Methods(), banMethod) {
 		return "", fmt.Errorf("invalid ban method %q", banMethod)
 	}
@@ -156,7 +143,7 @@ func parseBanMethod(banMethod string) (string, error) {
 	return banMethod, nil
 }
 
-func parseDatabase(databasePath string) (string, error) {
+func transformDatabase(databasePath string) (string, error) {
 	if databasePath == "" {
 		return "", errors.New("database path must be specified")
 	}
@@ -179,7 +166,7 @@ func parseDatabase(databasePath string) (string, error) {
 	return databasePath, nil
 }
 
-func parseAllowList(allowList string) (string, error) {
+func transformAllowList(allowList string) (string, error) {
 	if allowList == "" {
 		return "", nil
 	}

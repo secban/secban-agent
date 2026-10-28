@@ -14,7 +14,9 @@ func defaultParsedConfig() ParsedConfig {
 	}
 
 	return ParsedConfig{
-		Rules:         map[string]Rule{},
+		Rules: map[string]Rule{
+			"default": {},
+		},
 		LogLevel:      "info",
 		AllowList:     "",
 		ListenTCP:     "",

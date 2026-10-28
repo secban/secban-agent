@@ -82,7 +82,7 @@ func main() {
 	}
 }
 
-func loadConf() *config.Config {
+func loadConf() config.Config {
 	var configDir string
 	//nolint:revive,nolintlint // Not a deep-exit, just split from main() for readability.
 	flag.StringVar(&configDir, "config", "/etc/secban", "path to config directory")
@@ -97,14 +97,14 @@ func loadConf() *config.Config {
 	return conf
 }
 
-func ipInit(conf *config.Config) {
+func ipInit(conf config.Config) {
 	ipErr := ip.Init(conf.AllowList, conf.AllowLocal, conf.AllowLoopback)
 	if ipErr != nil {
 		log.Fatal().Err(ipErr).Msg("ip allowlist init failed")
 	}
 }
 
-func dbInit(ctx context.Context, conf *config.Config) {
+func dbInit(ctx context.Context, conf config.Config) {
 	if conf.Database == "" {
 		return
 	}
@@ -115,7 +115,7 @@ func dbInit(ctx context.Context, conf *config.Config) {
 	}
 }
 
-func dispatcherInit(ctx context.Context, conf *config.Config) {
+func dispatcherInit(ctx context.Context, conf config.Config) {
 	actor, loadErr := banloader.Load(conf.BanMethod)
 	if loadErr != nil {
 		log.Fatal().Err(loadErr).Msg("failed to load ban method")
