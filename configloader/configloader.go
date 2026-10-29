@@ -79,6 +79,11 @@ func TransformLogLevel(logLevel string) (zerolog.Level, error) {
 }
 
 func loadConfigFile(instance *koanf.Koanf, filePath string) error {
+	_, statErr := os.Stat(filePath)
+	if os.IsNotExist(statErr) {
+		return nil
+	}
+
 	checkErr := checkYAMLPermissions(filePath)
 	if checkErr != nil {
 		return checkErr

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"gitlab.com/secban/secban-agent/config"
+	"gitlab.com/secban/secban-agent/dispatcher"
 )
 
 func TestLoadConfigAcceptsActionsSlice(t *testing.T) {
@@ -77,8 +78,8 @@ func TestLoadConfigAcceptsStrictPermissions(t *testing.T) {
 		t.Fatalf("load config with 0600 perms: %v", loadErr)
 	}
 
-	if len(cfg.Rules) != 1 {
-		t.Fatalf("expected 1 rule, got %d", len(cfg.Rules))
+	if len(cfg.Rules) != 2 {
+		t.Fatalf("expected 2 rules, got %d", len(cfg.Rules))
 	}
 }
 
@@ -116,17 +117,30 @@ func writeRuleFile(t *testing.T, dir string, name string, ruleYAML string) {
 func assertRuleActions(t *testing.T, cfg config.Config, want []string) {
 	t.Helper()
 
-	if len(cfg.Rules) != 1 {
-		t.Fatalf("expected 1 rule, got %d", len(cfg.Rules))
+	if len(cfg.Rules) != 2 {
+		t.Fatalf("expected 2 rules, got %d", len(cfg.Rules))
 	}
 
-	if len(cfg.Rules[0].Actions) != len(want) {
-		t.Fatalf("expected %d actions, got %d", len(want), len(cfg.Rules[0].Actions))
+	var badRule *dispatcher.RuleConfig
+
+	for i := range cfg.Rules {
+		if cfg.Rules[i].Name == "bad" {
+			badRule = &cfg.Rules[i]
+			break
+		}
+	}
+
+	if badRule == nil {
+		t.Fatal("expected bad rule in config")
+	}
+
+	if len(badRule.Actions) != len(want) {
+		t.Fatalf("expected %d actions, got %d", len(want), len(badRule.Actions))
 	}
 
 	for index, action := range want {
-		if cfg.Rules[0].Actions[index] != action {
-			t.Fatalf("unexpected actions: %#v", cfg.Rules[0].Actions)
+		if badRule.Actions[index] != action {
+			t.Fatalf("unexpected actions: %#v", badRule.Actions)
 		}
 	}
 }
