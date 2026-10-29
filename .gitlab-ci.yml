@@ -13,7 +13,7 @@ variables:
   SECRET_DETECTION_ENABLED: "true"
   PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/secban-agent/${CI_COMMIT_TAG}"
 .go-cache:
-  image: golangci/golangci-lint:v2.13.2
+  image: golangci/golangci-lint:v2.15.0
   variables:
     GOPATH: $CI_PROJECT_DIR/.go
   before_script:

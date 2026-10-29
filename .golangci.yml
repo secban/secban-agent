@@ -50,7 +50,7 @@ linters:
           arguments:
             - maxLitCount: "3"
               allowInts: "0,1,2"
-              allowStrs: '"","add","update","delete"'
+              allowStrs: '"","add","ban","handler","ip","report","rule","status"'
           exclude:
             - "**/*_test.go"
         - name: cognitive-complexity
