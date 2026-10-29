@@ -70,7 +70,7 @@ func LoadConfig(configDir string) (Config, error) {
 	mainConfigPath := path.Join(configDir, fileName)
 	rulesPath := path.Join(configDir, rulesDir)
 
-	parsed, parseErr := configloader.ParseConfig(defaultParsedConfig(), mainConfigPath, []string{rulesPath})
+	parsed, parseErr := configloader.ParseConfig(DefaultParsedConfig(), mainConfigPath, []string{rulesPath})
 	if parseErr != nil {
 		return Config{}, parseErr
 	}

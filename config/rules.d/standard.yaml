@@ -1,6 +1,0 @@
-# Example rule for banning IP addresses.
-# It will simply inherit the default settings from the agent configuration.
-standard:
-  ban_duration:
-    - "10m"
-    - "1h"

@@ -3,7 +3,7 @@ package config
 const defaultCount = 4
 const defaultMaxEntries = 500
 
-func defaultParsedConfig() ParsedConfig {
+func DefaultParsedConfig() ParsedConfig {
 	rulesDefault := RulesDefault{
 		BanDuration: []string{"10m", "1h", "6h"},
 		RegistryTTL: "24h",
@@ -21,7 +21,7 @@ func defaultParsedConfig() ParsedConfig {
 		AllowList:     "",
 		ListenTCP:     "",
 		ListenUnix:    "/var/run/secban/agent.sock",
-		Profiler:      "localhost:6060",
+		Profiler:      "",
 		AllowLocal:    false,
 		AllowLoopback: true,
 		BanMethod:     "dummy",

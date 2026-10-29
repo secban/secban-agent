@@ -1,44 +1,57 @@
 # SecBan agent configuration file. #
 ####################################
 
-# Path to an allow list file. See /etc/secban/allowlist.example. Default: ""
+# Path to an allow list file. See /etc/secban/allowlist.example.
+allow_list: ""
 # allow_list: /etc/secban/allowlist
 
-# Allow local addresses 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7. Default: false
-# allow_local: false
+# Allow local addresses 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7.
+allow_local: false
 
-# Allow loopback addresses. 127.0.0.0/8, ::1. You probably should not disable this. Default: true
+# Allow loopback addresses. 127.0.0.0/8, ::1. You probably should not disable this.
 allow_loopback: true
 
-# Ban method to use. Options: `nft` (for nftables) or `ipset` (for iptables, requires ipset to be installed). Default: `nft`
+# Ban method to use. Options: `nft` (for nftables) or `ipset` (for iptables, requires ipset to be installed).
+ban_method: dummy
 # ban_method: nft
+# ban_method: ipset
 
-# Path to the agent's database file. You can set it to an empty value,
-# if you don't want to log ban events.
-# Alternatively, set it to ":memory:" for an in-memory database. Default: /var/lib/secban/agent.sqlite
-# database: /var/lib/secban/agent.sqlite
+# Path to the agent's database file.
+# You can set it to an empty value, if you don't want to log ban events.
+# Alternatively, set it to ":memory:" for an in-memory database.
+database: /var/lib/secban/agent.sqlite
 
 # Listen address(es) for the secban agent. You can specify both a TCP and a Unix socket.
+listen_tcp: ""
 # listen_tcp: 127.0.0.1:1024
 listen_unix: /var/run/secban/agent.sock
 
 # Logging level. Options: `debug`, `info`, `warn`, `error`
 log_level: "info"
 
+# Profiler endpoint. Set to an empty value to disable. PPROF information will be at /debug/pprof/.
+profiler: ""
+# profiler: localhost:6060
+
 # Default for all rules.
 rules_default:
+  # Custom actions to perform when a ban is applied. This can be any executable or script.
+  # Example: ["/opt/custom/notify.sh", "/opt/custom/log.sh"] would run notify.sh and log.sh when a ban is applied.
+  actions: []
   # Durations for which bans are active.
   # Example: "10m" for 10 minutes, "1h" for 1 hour, etc.
   # Multiple durations can be specified, and repeated bans will incrementally follow these durations.
   # Example: ["10m", "1h"] would lead to a 10 minute ban the first time, and a 1 hour ban if repeated.
   ban_duration:
-    - "10m"
+    - 10m
+    - 1h
+    - 6h
   # Number of report events before a ban is applied.
-  count: 5
+  count: 4
   # Maximum number of entries in the ban registry.
-  max_entries: 100
+  max_entries: 500
   # Time-to-live for entries in the ban registry.
-  registry_ttl: "30m"
+  registry_ttl: 24h
   # Sockets to communicate with other secban components.
   sockets: []
   # sockets:
