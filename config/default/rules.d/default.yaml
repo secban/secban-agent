@@ -1,3 +1,3 @@
 # Default rule for banning IP addresses.
-# It will simply inherit the default settings from the agent configuration.
+# It will simply inherit the settings from the agent configuration's bans_default.
 default:

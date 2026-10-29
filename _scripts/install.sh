@@ -40,12 +40,7 @@ chown secban:secban /var/lib/secban
 chmod 0770 /var/lib/secban
 
 # Install the example agent configuration.
-mkdir -p /etc/secban
-if [ ! -f /etc/secban/agent.yaml ]; then
-    cp "./agent.yaml" "/etc/secban/agent.yaml"
-    cp "./allowlist" "/etc/secban/allowlist"
-    cp -r "./rules.d" "/etc/secban/"
-fi
+cp -ar "./etc/secban/" "/etc/secban/"
 
 # Install the systemd service file for the secban-agent.
 if [ ! -f /etc/systemd/system/secban-agent.service ]; then

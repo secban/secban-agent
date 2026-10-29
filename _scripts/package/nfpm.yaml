@@ -28,24 +28,8 @@ contents:
     expand: true
     file_info:
       mode: 0755
-  - src: "${REPO_DIR}/config/agent.yaml"
-    dst: "/etc/secban/agent.yaml"
-    expand: true
-    type: "config|noreplace"
-    file_info:
-      mode: 0640
-      owner: "root"
-      group: "secban"
-  - src: "${REPO_DIR}/config/allowlist"
-    dst: "/etc/secban/allowlist"
-    expand: true
-    type: "config|noreplace"
-    file_info:
-      mode: 0640
-      owner: "root"
-      group: "secban"
-  - src: "${REPO_DIR}/config/rules.d"
-    dst: "/etc/secban/rules.d"
+  - src: "${BIN_DIR}/etc/secban"
+    dst: "/etc/secban"
     expand: true
     type: "config|noreplace|tree"
   - src: "${REPO_DIR}/_scripts/systemd/secban-agent.service"

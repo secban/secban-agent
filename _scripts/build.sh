@@ -32,11 +32,13 @@ export GOARCH="$ARCH"; env GOOS="$GOOS" GOARCH="$ARCH" go build $BUILD_OPTIONS -
 export GOARCH="$ARCH"; env GOOS="$GOOS" GOARCH="$ARCH" go build $BUILD_OPTIONS -o "$TMPDIR/$ARCH/secban-agent-configcheck" "$LDFLAGS" "$REPO/cmd/configcheck/configcheck.go"
 
 cp "$REPO/_scripts/install.sh" "$TMPDIR/$ARCH/"
-cp "$REPO/config/agent.yaml" "$TMPDIR/$ARCH/"
-cp "$REPO/config/allowlist" "$TMPDIR/$ARCH/"
-cp -r "$REPO/config/rules.d" "$TMPDIR/$ARCH/"
 cp "$REPO/_scripts/systemd/secban-agent.service" "$TMPDIR/$ARCH/"
 
+mkdir -p "$TMPDIR/$ARCH/etc/secban"
+rsync -a "$REPO/config/default/" "$TMPDIR/$ARCH/etc/secban"
+find "$TMPDIR/$ARCH/etc/secban" -type f -name "*.yaml" -exec sh -c 'for f; do mv "$f" "$f.default"; done' sh {} +
+find "$TMPDIR/$ARCH/etc/secban" -type d -exec chmod 755 {} \;
+find "$TMPDIR/$ARCH/etc/secban" -type f -exec chmod 644 {} \;
 chmod +x "$TMPDIR/$ARCH/install.sh"
 
 if [ "$TEST_INSTALL" = true ]; then
