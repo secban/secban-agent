@@ -43,6 +43,8 @@ go-test:
     - .go-cache
   stage: test
   script:
+    - find "./config" -type d -exec chmod 755 {} \;
+    - find "./config" -type f -exec chmod 644 {} \;
     - go test -race ./...
   allow_failure: false
 .build_matrix: &build_matrix
