@@ -37,6 +37,9 @@ chmod +x "$TMPDIR/$ARCH/install.sh"
 cp "$REPO/_scripts/systemd/secban-agent.service" "$TMPDIR/$ARCH/"
 chmod +x "$TMPDIR/$ARCH/secban-agent.service"
 
+cp "$REPO/_scripts/openrc/secban-agent.rc" "$TMPDIR/$ARCH/"
+chmod +x "$TMPDIR/$ARCH/secban-agent.rc"
+
 mkdir -p "$TMPDIR/$ARCH/etc/secban"
 cp -ar "$REPO/config/default/" "$TMPDIR/$ARCH/etc/secban"
 find "$TMPDIR/$ARCH/etc/secban" -type f -name "*.yaml" -exec sh -c 'for f; do mv "$f" "$f.default"; done' sh {} +

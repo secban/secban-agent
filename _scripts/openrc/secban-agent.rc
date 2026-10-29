@@ -1,0 +1,26 @@
+#!/sbin/openrc-run
+
+description="SecBan Agent Service"
+supervisor="supervise-daemon"
+
+command="/usr/sbin/secban-agent"
+command_user="secban:secban"
+
+respawn_delay=5
+respawn_max=0
+
+depend() {
+    need net
+}
+
+start_pre() {
+    if [ ! -x "/usr/sbin/secban-agent" ]; then
+        eerror "Executable /usr/sbin/secban-agent does not exist or is not executable"
+        return 1
+    fi
+
+    checkpath -d -m 0770 -o secban:secban /var/run/secban
+    checkpath -d -m 0770 -o secban:secban /var/lib/secban
+}
+
+capabilities="^cap_net_admin,^cap_net_raw"

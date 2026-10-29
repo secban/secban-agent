@@ -42,12 +42,20 @@ chmod 0770 /var/lib/secban
 # Install the example agent configuration.
 cp -ar "./etc/secban/" "/etc/secban/"
 
-# Install the systemd service file for the secban-agent.
-if [ ! -f /etc/systemd/system/secban-agent.service ]; then
-    cp "./secban-agent.service" "/etc/systemd/system/secban-agent.service"
-fi
-
+# Install systemd service.
 if [ ! -z "$(which systemctl)" ]; then
+    if [ ! -f /etc/systemd/system/secban-agent.service ]; then
+        cp "./secban-agent.service" "/etc/systemd/system/secban-agent.service"
+    fi
     systemctl daemon-reload
     systemctl enable secban-agent.service
+fi
+
+# Install OpenRC service.
+if [ ! -z "$(which rc-update)" ]; then
+    if [ ! -f /etc/init.d/secban-agent ]; then
+        cp "./secban-agent.rc" "/etc/init.d/secban-agent"
+        chmod +x "/etc/init.d/secban-agent"
+    fi
+    rc-update add secban-agent default
 fi
