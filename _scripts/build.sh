@@ -1,7 +1,8 @@
 #!/bin/bash
 # shellcheck disable=SC2086 # We want $BUILD_OPTIONS to be expanded as-is.
 set -ex
-
+OWN_DIR="$(dirname "$0")"
+cd "$OWN_DIR"
 REPO=$(git rev-parse --show-toplevel)
 
 
@@ -41,7 +42,7 @@ cp "$REPO/_scripts/openrc/secban-agent.rc" "$TMPDIR/$ARCH/"
 chmod +x "$TMPDIR/$ARCH/secban-agent.rc"
 
 mkdir -p "$TMPDIR/$ARCH/etc/secban"
-cp -ar "$REPO/config/default/" "$TMPDIR/$ARCH/etc/secban"
+cp -ar $REPO/config/default/* "$TMPDIR/$ARCH/etc/secban"
 find "$TMPDIR/$ARCH/etc/secban" -type f -name "*.yaml" -exec sh -c 'for f; do mv "$f" "$f.default"; done' sh {} +
 find "$TMPDIR/$ARCH/etc/secban" -type d -exec chmod 755 {} \;
 find "$TMPDIR/$ARCH/etc/secban" -type f -exec chmod 644 {} \;
