@@ -1,8 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2086 # We want $BUILD_OPTIONS to be expanded as-is.
 set -ex
-OWN_DIR="$(dirname "$0")"
-cd "$OWN_DIR"
+
 REPO=$(git rev-parse --show-toplevel)
 
 
